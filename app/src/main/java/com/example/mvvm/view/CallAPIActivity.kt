@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.widget.FrameLayout
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -20,27 +21,36 @@ import com.google.android.material.snackbar.Snackbar
 
 @Suppress("DEPRECATION")
 class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener{
+
     private var snackBar:Snackbar?=null
     private var model: ProfileViewModel?=null
+    private var details: FrameLayout?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding:ActivityCallApiBinding=DataBindingUtil.setContentView(this, R.layout.activity_call_api)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         registerReceiver(ConnectivityReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
-        snackBar=Snackbar.make(binding.recyclerView, R.string.not_connected,Snackbar.LENGTH_INDEFINITE)
-        model = ViewModelProviders.of(this).get(ProfileViewModel::class.java)
         binding.lifecycleOwner=this
+        val recyclerView=binding.recyclerView
+        model = ViewModelProviders.of(this).get(ProfileViewModel::class.java)
         model?.apply {
             binding.let{
+                details=it.fragmentContainer
                 it.account=this
-                container=it.fragmentContainer
+                if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && active) ||
+                    (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && it.editButton.isChecked)) {
+                    title = getString(R.string.account_details)
+                    details?.visibility = View.VISIBLE
+                }
+                else
+                    title = getString(R.string.accounts)
                 it.cancelButton.setOnClickListener {
                     if(resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE) {
                         title = getString(R.string.accounts)
                         active= false
                     }
-                    cancel()
+                    assignment(position)
                 }
                 it.editButton.setOnClickListener {
                     if(resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE)
@@ -49,20 +59,6 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     if(!binding.editButton.isChecked)
                         putData()
                 }
-                statusCheck.observe (this@CallAPIActivity, Observer<Boolean> {value ->
-                    binding.statusEdit.text=when(value){
-                        true-> getString(R.string.active)
-                        else-> getString(R.string.inactive)
-                    }
-                })
-                if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && active) ||
-                    (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && it.editButton.isChecked)) {
-                    title = getString(R.string.account_details)
-                    container?.visibility = View.VISIBLE
-                }
-                else
-                    title = getString(R.string.accounts)
-                recyclerView=it.recyclerView
             }
             recyclerView?.let{
                 it.layoutManager=LinearLayoutManager(it.context)
@@ -72,12 +68,29 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(it, newState)
                         if (!it.canScrollVertically(1)) {
-                            binding.progressSpinner.y=it.height*0.75.toFloat()
                             netCall()
+                            if(pageIndex>1)
+                                binding.progressSpinner.y=it.height*0.75.toFloat()
                         }
                     }})
             }
+            refreshRecyclerView.observe(this@CallAPIActivity, Observer<Boolean> {value ->
+                when(value){
+                    true-> recyclerView?.adapter?.notifyDataSetChanged()
+                    else-> recyclerView?.adapter?.notifyItemChanged(position)
+                }
+            })
+            viewContainer.observe(this@CallAPIActivity, Observer<Boolean> {
+                details?.visibility=View.VISIBLE
+            })
+            statusCheck.observe (this@CallAPIActivity, Observer<Boolean> {value ->
+                binding.statusEdit.text=when(value){
+                    true-> getString(R.string.active)
+                    else-> getString(R.string.inactive)
+                }
+            })
         }
+        snackBar=Snackbar.make(binding.recyclerView, R.string.not_connected,Snackbar.LENGTH_INDEFINITE)
     }
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
         model?.apply {
@@ -99,17 +112,14 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         ConnectivityReceiver.connectivityReceiverListener = this
     }
     override fun onBackPressed() {
-        model?.let {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
-                it.container?.visibility == View.VISIBLE) {
-                title = getString(R.string.accounts)
-                it.active = false
-                it.container?.visibility = View.GONE
-            }
-            else
-                super.onBackPressed()
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && details?.visibility == View.VISIBLE) {
+            title = getString(R.string.accounts)
+            model?.active = false
+            details?.visibility = View.GONE
         }
-            overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
+        else
+            super.onBackPressed()
+        overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
     }
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()

@@ -3,7 +3,6 @@ package com.example.mvvm.viewModel
 import android.content.res.Configuration
 import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
@@ -18,9 +17,7 @@ import org.json.JSONObject
 class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Adapter<DetailAdapter.MyViewHolder>() {
     private val final = StringValues()
 
-    class MyViewHolder(val binding: EntryBinding) : RecyclerView.ViewHolder(binding.root){
-        val image: Picasso =Picasso.get()
-    }
+    class MyViewHolder(val binding: EntryBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int)=
         MyViewHolder(EntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -40,7 +37,7 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
                 JSONObject(dataArray[position]).let {
                     entry= Entry("${it.getString(final.FIRST_NAME)} ${it.getString(final.LAST_NAME)}",
                         it.getString(final.GENDER),it.getString(final.EMAIL))
-                    image.load(it.getJSONObject(final.LINKS).getJSONObject(final.AVATAR).getString(final.HREF))
+                    Picasso.get().load(it.getJSONObject(final.LINKS).getJSONObject(final.AVATAR).getString(final.HREF))
                         .into(avatar)
                     executePendingBindings()
                 }
@@ -50,7 +47,7 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
                     model.let {
                         it.assignment(position)
                         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                            it.container?.visibility = View.VISIBLE
+                            it.viewContainer.value=true
                             title = getString(R.string.account_details)
                             it.active = true
                         }

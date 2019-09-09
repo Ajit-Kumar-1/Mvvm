@@ -1,26 +1,23 @@
 package com.example.mvvm.viewModel
 
 import android.app.Application
-import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
-import androidx.recyclerview.widget.RecyclerView
 import com.android.volley.VolleyError
 import com.example.mvvm.R
 import com.example.mvvm.model.APIEntity
 import com.example.mvvm.model.AccountRepository
 import com.example.mvvm.model.StringValues
-import com.example.mvvm.model.VolleyCallBack
 import org.json.JSONObject
 import java.util.*
 import kotlin.collections.HashMap
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application),VolleyCallBack{
+class ProfileViewModel(application: Application) : AndroidViewModel(application), VolleyCallBack {
 //class ProfileViewModel:ViewModel(),VolleyCallBack{
     private val final= StringValues()
     var repository: AccountRepository = AccountRepository(application)
-    private var pageIndex=1
+    var pageIndex=1
     var retryRequest=false
     var position=0
     var account: MutableLiveData<APIEntity> = MutableLiveData()
@@ -30,10 +27,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var progress1:MutableLiveData<Boolean> = MutableLiveData()
     var progress2:MutableLiveData<Boolean> = MutableLiveData()
     var statusCheck:MutableLiveData<Boolean> = MutableLiveData()
-    var maleCheck=false
-    var femaleCheck=true
-    var container: FrameLayout?=null
-    var recyclerView:RecyclerView?=null
+    var refreshRecyclerView:MutableLiveData<Boolean> = MutableLiveData()
+    var viewContainer:MutableLiveData<Boolean> = MutableLiveData()
+    var maleCheck:MutableLiveData<Boolean> = MutableLiveData()
+    var femaleCheck:MutableLiveData<Boolean> = MutableLiveData()
     init{
         netCall()
     }
@@ -46,7 +43,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     putMap[final.FIRST_NAME] = firstName
                 if (it.lastName != lastName)
                     putMap[final.LAST_NAME] = lastName
-                gender=when(maleCheck){
+                gender=when(maleCheck.value){
                     true->final.MALE
                     else->final.FEMALE
                 }
@@ -86,17 +83,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                 it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
         }
     }
-    fun cancel(){
-        enabled.value=false
-        account.value=retrieveDetails(JSONObject(repository.data[position]))
-    }
     override fun onPutResponse(response: JSONObject) {
         if (response.getJSONObject(final.META).getBoolean(final.SUCCESS)) {
-            response.getJSONObject(final.RESULT).let {
-                account.value = retrieveDetails(it)
-                originalAccount = retrieveDetails(it)
-            }
-            recyclerView?.adapter?.notifyItemChanged(position)
+            assignment(position)
+            refreshRecyclerView.value=false
             Toast.makeText(getApplication(), R.string.information_updated, Toast.LENGTH_SHORT).show()
             progress2.value=false
         }
@@ -119,10 +109,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
                     " ${jsonObject.get(final.MESSAGE)}", Toast.LENGTH_SHORT).show()
         else {
             if (pageIndex == 1)
-                account.value = retrieveDetails(JSONObject(repository.data[0]))
+               assignment(0)
             if (success)
                 pageIndex++
-            recyclerView?.adapter?.notifyDataSetChanged()
+            refreshRecyclerView.value=true
         }
         progress1.value=false
     }
@@ -135,8 +125,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     fun assignment(position:Int){
         account.value = retrieveDetails(JSONObject(repository.data[position]))
         originalAccount = retrieveDetails(JSONObject(repository.data[position]))
-        maleCheck=account.value?.gender==final.MALE
-        femaleCheck=account.value?.gender==final.FEMALE
+        maleCheck.value=account.value?.gender==final.MALE
+        femaleCheck.value=account.value?.gender==final.FEMALE
         statusCheck.value=account.value?.status==final.ACTIVE
         this.position = position
         enabled.value = false

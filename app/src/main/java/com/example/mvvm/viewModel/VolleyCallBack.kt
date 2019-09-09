@@ -1,4 +1,4 @@
-package com.example.mvvm.model
+package com.example.mvvm.viewModel
 
 import com.android.volley.VolleyError
 import org.json.JSONObject

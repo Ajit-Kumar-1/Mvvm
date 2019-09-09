@@ -32,7 +32,7 @@
         <ProgressBar
             android:visibility="@{account.progress2? android.view.View.VISIBLE : android.view.View.INVISIBLE}"
             android:id="@+id/progressSpinner2"
-            style="?android:attr/progressBarStyleLarge"
+            style="?android:attr/progressBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal" />

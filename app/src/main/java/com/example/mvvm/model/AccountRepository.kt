@@ -7,6 +7,7 @@ import com.android.volley.RequestQueue
 import com.android.volley.Response
 import com.android.volley.toolbox.JsonObjectRequest
 import com.android.volley.toolbox.Volley
+import com.example.mvvm.viewModel.VolleyCallBack
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -26,7 +27,7 @@ class AccountRepository (application: Application){
         .build()
     private val dataDAO: DataDAO= database.dataDao()
 
-    fun insert(data: APIEntity){
+    private fun insert(data: APIEntity){
         GlobalScope.launch {
             dataDAO.insert(data)
         }
@@ -59,9 +60,9 @@ class AccountRepository (application: Application){
                 if (jsonObject.getBoolean(final.SUCCESS)) {
                     val jsonArray = response.getJSONArray(final.RESULT)
                     success=true
-                    var lastID=when(data.size==0){
-                        true->0
-                        else->JSONObject(data.last()).getString(final.ID).toInt()
+                    var lastID=when(data.size>0){
+                        true->JSONObject(data.last()).getString(final.ID).toInt()
+                        else->0
                     }
                     for (i in 0 until jsonArray.length()) {
                         jsonObject = jsonArray.getJSONObject(i)
