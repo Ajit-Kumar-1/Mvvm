@@ -23,7 +23,8 @@ class SignInFragment : Fragment() {
     private var password: String? = null
     private val emailValidationPattern = Pattern.compile(finalValues.emailRegex)
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+      savedInstanceState: Bundle?): View? {
         val view = inflater.inflate(R.layout.sign_in_fragment, container, false)
         val context=this.activity
         (activity as AppCompatActivity).supportActionBar!!.setDisplayHomeAsUpEnabled(false)
@@ -33,13 +34,17 @@ class SignInFragment : Fragment() {
         val emailField:EditText = view.findViewById(R.id.sign_in_email)
         //val passwordField:EditText = view.findViewById(R.id.sign_in_password)
         //val rememberCheck:CheckBox = view.findViewById(R.id.sign_in_remember)
-        sharedPreference = context.getSharedPreferences(finalValues.REMEMBER_KEY , Context.MODE_PRIVATE)
+        sharedPreference = context.getSharedPreferences(finalValues.REMEMBER_KEY,
+            Context.MODE_PRIVATE)
         emailField.requestFocus()
 //        when {
 //            sharedPreference!!.getBoolean(finalValues.REMEMBER_TOGGLE , false) &&
-//                    sharedPreference!!.getString(finalValues.REMEMBER_ACCOUNT , finalValues.NOT_FOUND ) != finalValues.NOT_FOUND
-//            -> startActivity(Intent(context, AccountActivity::class.java).putExtra(finalValues.ACCOUNT,
-//                sharedPreference!!.getString(finalValues.REMEMBER_ACCOUNT , finalValues.NOT_FOUND )))
+//                    sharedPreference!!.getString(finalValues.REMEMBER_ACCOUNT ,
+//                    finalValues.NOT_FOUND ) != finalValues.NOT_FOUND
+//            -> startActivity(Intent(context, AccountActivity::class.java).
+//            putExtra(finalValues.ACCOUNT,
+//                sharedPreference!!.getString(finalValues.REMEMBER_ACCOUNT ,
+//                finalValues.NOT_FOUND )))
 //        }
         //Auto-fill email
         emailField.setText(emailAutoFill)
@@ -51,22 +56,30 @@ class SignInFragment : Fragment() {
             when {
                 email!="" -> when {
                     validateEmail(email) -> when  {
-                        sharedPreference?.getString(finalValues.PREFERENCE_PASSWORD ,finalValues.NOT_FOUND )==password-> {
+                        sharedPreference?.getString(finalValues.PREFERENCE_PASSWORD ,
+                        finalValues.NOT_FOUND )==password-> {
                             emailAutoFill = email
-                            startActivity(Intent(context, AccountActivity::class.java).putExtra(finalValues.ACCOUNT ,email))
-                            context.getSharedPreferences(finalValues.REMEMBER_KEY , Context.MODE_PRIVATE).edit().apply{
+                            startActivity(Intent(context, AccountActivity::class.java).
+                            putExtra(finalValues.ACCOUNT ,email))
+                            context.getSharedPreferences(finalValues.REMEMBER_KEY ,
+                             Context.MODE_PRIVATE).edit().apply{
                                 putString(finalValues.REMEMBER_ACCOUNT ,email)
                                 putBoolean(finalValues.REMEMBER_TOGGLE ,rememberCheck.isChecked)
                                 apply()
                             } // Remember me set
                         } //Sign in complete
-                        sharedPreference?.getString(finalValues.PREFERENCE_PASSWORD ,finalValues.NOT_FOUND )==finalValues.NOT_FOUND 
-                        ->Toast.makeText(context,getString(R.string.account_nonexistent), Toast.LENGTH_SHORT).show()
-                        else -> Toast.makeText(context,getString(R.string.wrong_password), Toast.LENGTH_SHORT).show()
+                        sharedPreference?.getString(finalValues.PREFERENCE_PASSWORD ,
+                        finalValues.NOT_FOUND )==finalValues.NOT_FOUND
+                        ->Toast.makeText(context,getString(R.string.account_nonexistent),
+                         Toast.LENGTH_SHORT).show()
+                        else -> Toast.makeText(context,getString(R.string.wrong_password),
+                         Toast.LENGTH_SHORT).show()
                     }
-                    else -> Toast.makeText(context,getString(R.string.enter_valid_email), Toast.LENGTH_SHORT).show()
+                    else -> Toast.makeText(context,getString(R.string.enter_valid_email),
+                     Toast.LENGTH_SHORT).show()
                 }
-                else -> Toast.makeText(context,getString(R.string.enter_email), Toast.LENGTH_SHORT).show()
+                else -> Toast.makeText(context,getString(R.string.enter_email),
+                 Toast.LENGTH_SHORT).show()
             }*/
             startActivity(Intent(context, CallAPIActivity::class.java))
             context.overridePendingTransition(R.anim.enter, R.anim.exit)

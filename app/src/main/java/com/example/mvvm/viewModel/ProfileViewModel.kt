@@ -13,10 +13,11 @@ import org.json.JSONObject
 import java.util.*
 import kotlin.collections.HashMap
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application), VolleyCallBack {
+@Suppress("DEPRECATION")
+class ProfileViewModel(application: Application) : AndroidViewModel(application), VolleyCallBack{
 //class ProfileViewModel:ViewModel(),VolleyCallBack{
     private val final= StringValues()
-    var repository: AccountRepository = AccountRepository(application)
+    private var repository: AccountRepository = AccountRepository(application)
     var pageIndex=1
     var position=0
     var account: MutableLiveData<APIEntity> = MutableLiveData()
@@ -30,8 +31,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var viewContainer:MutableLiveData<Boolean> = MutableLiveData()
     var maleCheck:MutableLiveData<Boolean> = MutableLiveData()
     var femaleCheck:MutableLiveData<Boolean> = MutableLiveData()
+    var retryRequest: MutableLiveData<Boolean> = MutableLiveData()
 
     init{
+        retryRequest.value=false
         enabled.value=false
         netCall()
     }
@@ -70,7 +73,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
         if (putMap != HashMap<String, String>()) {
             progress2.value = true
-            account.value?.id?.let { repository.putData(putMap,position, it,this as VolleyCallBack) }
+            account.value?.id?.let {
+                repository.putData(putMap,position, it,this as VolleyCallBack)
+            }
         }
     }
     fun netCall(){
@@ -79,9 +84,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
     private fun retrieveDetails(jsonObject:JSONObject):APIEntity{
         jsonObject.let {
-            return APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME), it.getString(final.LAST_NAME),
-                it.getString(final.GENDER), it.getString(final.DOB), it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
-                it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
+            return APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
+                it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
+                it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
+                it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS),
+                it.getString(final.STATUS))
         }
     }
     override fun onPutResponse(response: JSONObject) {
@@ -94,8 +101,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         else {
             val responseArray = response.getJSONArray(final.RESULT)
             for (i in 0 until responseArray.length())
-                Toast.makeText(getApplication(), "${responseArray.getJSONObject(i).getString(final.FIELD)}:" +
-                        " ${responseArray.getJSONObject(i).getString(final.MESSAGE)}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(getApplication(),
+                    "${responseArray.getJSONObject(i).getString(final.FIELD)}:" +
+                        " ${responseArray.getJSONObject(i).getString(final.MESSAGE)}",
+                    Toast.LENGTH_SHORT).show()
         }
         progress2.value = false
     }
@@ -123,9 +132,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     override fun getPageError(error: VolleyError) {
         progress1.value=false
     }
-    fun retry(){
-        repository.retry()
-    }
     fun assignment(position:Int){
         account.value = retrieveDetails(JSONObject(repository.data[position]))
         originalAccount = retrieveDetails(JSONObject(repository.data[position]))
@@ -135,4 +141,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         this.position = position
         enabled.value = false
     }
+    fun retry()=repository.retry()
+    fun getData()=repository.data
 }

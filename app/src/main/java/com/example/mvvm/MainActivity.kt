@@ -12,7 +12,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         if(supportFragmentManager.fragments.size==0)//Ensure start-up state (no fragments yet)
-            supportFragmentManager.beginTransaction().add(R.id.fragment_container, SignInFragment(),finalValues.HOME ).commit()
+            supportFragmentManager.beginTransaction().add(R.id.fragment_container, SignInFragment(),
+                finalValues.HOME ).commit()
     }
     override fun onBackPressed() {
         if(supportFragmentManager.findFragmentByTag(finalValues.HOME)!!.isVisible)

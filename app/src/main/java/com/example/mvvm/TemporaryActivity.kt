@@ -30,13 +30,16 @@ class TemporaryActivity : AppCompatActivity() {
             toggleSoftInput(InputMethodManager.SHOW_FORCED,0)
         findViewById<Button>(R.id.getEntry).setOnClickListener {
             val deferred=GlobalScope.async {
-                db.dataDao().findByLastName(findViewById<EditText>(R.id.findByLastName).text.trim().toString())
+                db.dataDao().findByLastName(findViewById<EditText>(R.id.findByLastName).
+                    text.trim().toString())
             }
             runBlocking { data=deferred.await() }
          findViewById<TextView>(R.id.textView4).text=
-             "ID: ${data?.id}\nFirst Name: ${data?.firstName}\nLast Name: ${data?.lastName}\nGender: " +
-                     "${data?.gender}\nEmail: ${data?.email}\nPhone: ${data?.phone}\nDate of Birth: " +
-                     "${data?.dob}\nWebsite: ${data?.website}\nAddress: ${data?.address}\nStatus: ${data?.status}"
+             "ID: ${data?.id}\nFirst Name: ${data?.firstName}\nLast Name: " +
+                     "${data?.lastName}\nGender: " + "${data?.gender}\nEmail:" +
+                     " ${data?.email}\nPhone:" + " ${data?.phone}\nDate of Birth: " +
+                     "${data?.dob}\nWebsite: ${data?.website}\nAddress: " +
+                     "${data?.address}\nStatus: ${data?.status}"
         }
     }
     override fun onSupportNavigateUp(): Boolean {

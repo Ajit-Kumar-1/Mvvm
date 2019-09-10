@@ -21,7 +21,8 @@ import com.example.mvvm.viewModel.ProfileViewModel
 import com.google.android.material.snackbar.Snackbar
 
 @Suppress("DEPRECATION")
-class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener, ActivityCallBack{
+class CallAPIActivity : AppCompatActivity(), ActivityCallBack,
+    ConnectivityReceiver.ConnectivityReceiverListener {
 
     private var model: ProfileViewModel?=null
     private var snackBar:Snackbar?=null
@@ -30,7 +31,8 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding:ActivityCallApiBinding=DataBindingUtil.setContentView(this, R.layout.activity_call_api)
+        val binding:ActivityCallApiBinding=DataBindingUtil.setContentView(this,
+            R.layout.activity_call_api)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         registerReceiver(connectivityReceiver,IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
         binding.lifecycleOwner=this
@@ -40,8 +42,9 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             binding.let{
                 details=it.fragmentContainer
                 it.account=this
-                if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && active) ||
-                    (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && enabled.value!!)) {
+                if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                    && active) || (resources.configuration.orientation ==
+                        Configuration.ORIENTATION_LANDSCAPE && enabled.value!!)) {
                     title = getString(R.string.account_details)
                     details?.visibility = View.VISIBLE
                 }
@@ -65,7 +68,7 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             }
             recyclerView?.let{
                 it.layoutManager=LinearLayoutManager(it.context)
-                it.adapter=DetailAdapter(repository.data)
+                it.adapter=DetailAdapter(getData())
                 it.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                     override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(it, newState)
@@ -75,6 +78,7 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                                 binding.progressSpinner.y=it.height*0.75.toFloat()
                         }
                     }})
+                it.scrollToPosition(position)
             }
             refreshRecyclerView.observe(this@CallAPIActivity, Observer<Boolean> {value ->
                 when(value){
@@ -95,41 +99,53 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     else-> getString(R.string.inactive)
                 }
             })
+            retryRequest.observe(this@CallAPIActivity,Observer<Boolean>{ value ->
+                if(value)
+                    snackBar?.show()
+                else
+                    snackBar?.dismiss()
+            })
         }
-        snackBar=Snackbar.make(binding.recyclerView, R.string.not_connected,Snackbar.LENGTH_INDEFINITE)
+        snackBar=Snackbar.make(binding.recyclerView, R.string.not_connected,
+            Snackbar.LENGTH_INDEFINITE)
     }
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
+        model?.apply {
             if (isConnected) {
-                snackBar?.dismiss()
-                model?.retry()
+                if(retryRequest.value!!)
+                retry()
+                retryRequest.value = false
             }
-            else
-                snackBar?.show()
+            else {
+                retryRequest.value = true
+            }
+        }
+    }
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(connectivityReceiver)
     }
     override fun onResume() {
         super.onResume()
         ConnectivityReceiver.connectivityReceiverListener = this
+    }
+    override fun showDetails() {
+        details?.visibility=View.VISIBLE
+    }
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return super.onSupportNavigateUp()
     }
     override fun onBackPressed() {
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
             details?.visibility == View.VISIBLE) {
             title = getString(R.string.accounts)
             model?.active = false
+            model?.assignment(model?.position!!)
             details?.visibility = View.GONE
         }
         else
             super.onBackPressed()
         overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
-    }
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return super.onSupportNavigateUp()
-    }
-    override fun onPause() {
-        super.onPause()
-        unregisterReceiver(connectivityReceiver)
-    }
-    override fun showDetails() {
-        details?.visibility=View.VISIBLE
     }
 }

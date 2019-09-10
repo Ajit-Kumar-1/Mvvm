@@ -14,7 +14,8 @@ import com.example.mvvm.model.StringValues
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
 
-class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Adapter<DetailAdapter.MyViewHolder>() {
+class DetailAdapter(private val dataArray: ArrayList<String>) :
+    RecyclerView.Adapter<DetailAdapter.MyViewHolder>() {
     private val final = StringValues()
     private var recyclerView:RecyclerView?=null
 
@@ -26,7 +27,8 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int)=
-        MyViewHolder(EntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+        MyViewHolder(EntryBinding.inflate(LayoutInflater.from(parent.context), parent,
+            false))
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         holder.apply {
@@ -41,10 +43,11 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
             )
             binding.apply {
                 JSONObject(dataArray[position]).let {
-                    entry= Entry("${it.getString(final.FIRST_NAME)} ${it.getString(final.LAST_NAME)}",
+                    entry= Entry(
+                        "${it.getString(final.FIRST_NAME)} ${it.getString(final.LAST_NAME)}",
                         it.getString(final.GENDER),it.getString(final.EMAIL))
-                    Picasso.get().load(it.getJSONObject(final.LINKS).getJSONObject(final.AVATAR).getString(final.HREF))
-                        .into(avatar)
+                    Picasso.get().load(it.getJSONObject(final.LINKS).getJSONObject(final.AVATAR)
+                        .getString(final.HREF)).into(avatar)
                     executePendingBindings()
                 }
             }
@@ -52,7 +55,8 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
                 (view.context as AppCompatActivity).apply {
                     model.let {
                         it.assignment(position)
-                        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                        if (resources.configuration.orientation ==
+                            Configuration.ORIENTATION_PORTRAIT) {
                             (this as ActivityCallBack).showDetails()
                             title = getString(R.string.account_details)
                             it.active = true

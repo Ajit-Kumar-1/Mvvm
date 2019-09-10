@@ -26,6 +26,8 @@ class AccountRepository (application: Application){
         .fallbackToDestructiveMigration()
         .build()
     private val dataDAO: DataDAO= database.dataDao()
+    private val blankRequest = object:JsonObjectRequest
+        (Method.GET,null,null,null,null){}
 
     private fun insert(data: APIEntity){
         GlobalScope.launch {
@@ -41,8 +43,12 @@ class AccountRepository (application: Application){
                         data[position] = it.toString()
                     }
                 callBack.onPutResponse(response)
+                request=blankRequest
             },
-            Response.ErrorListener { callBack.onPutError(it) }) {
+            Response.ErrorListener {
+                callBack.onPutError(it)
+                request=blankRequest
+            }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): MutableMap<String, String> {
                 val headers = HashMap<String, String>()
@@ -78,8 +84,10 @@ class AccountRepository (application: Application){
                     }
                 }
                 callBack.getPageResponse(response,success)
+                request=blankRequest
             }, Response.ErrorListener {
                 callBack.getPageError(it)
+                request=blankRequest
             }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): MutableMap<String, String> {
@@ -90,14 +98,14 @@ class AccountRepository (application: Application){
         }
         queue.add(request)
     }
-    fun retry(){
-        queue.add(request)
-    }
     fun retrieveDetails(jsonObject:JSONObject):APIEntity{
         jsonObject.let {
             return APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME), it.getString(final.LAST_NAME),
                 it.getString(final.GENDER), it.getString(final.DOB), it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
                 it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
         }
+    }
+    fun retry(){
+        queue.add(request)
     }
 }
