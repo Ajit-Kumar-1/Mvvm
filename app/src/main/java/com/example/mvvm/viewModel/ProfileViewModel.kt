@@ -18,10 +18,10 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 //class ProfileViewModel:ViewModel(),VolleyCallBack{
     private val final= StringValues()
     private var repository: AccountRepository = AccountRepository(application)
+    private var originalAccount:APIEntity?=null
+    var account: MutableLiveData<APIEntity> = MutableLiveData()
     var pageIndex=1
     var position=0
-    var account: MutableLiveData<APIEntity> = MutableLiveData()
-    private var originalAccount:APIEntity?=null
     var enabled:MutableLiveData<Boolean> = MutableLiveData()
     var active=false
     var progress1:MutableLiveData<Boolean> = MutableLiveData()
