@@ -15,22 +15,24 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.mvvm.R
 import com.example.mvvm.databinding.ActivityCallApiBinding
 import com.example.mvvm.util.ConnectivityReceiver
+import com.example.mvvm.viewModel.ActivityCallBack
 import com.example.mvvm.viewModel.DetailAdapter
 import com.example.mvvm.viewModel.ProfileViewModel
 import com.google.android.material.snackbar.Snackbar
 
 @Suppress("DEPRECATION")
-class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener{
+class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener, ActivityCallBack{
 
-    private var snackBar:Snackbar?=null
     private var model: ProfileViewModel?=null
+    private var snackBar:Snackbar?=null
     private var details: FrameLayout?=null
+    private val connectivityReceiver= ConnectivityReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding:ActivityCallApiBinding=DataBindingUtil.setContentView(this, R.layout.activity_call_api)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        registerReceiver(ConnectivityReceiver(), IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+        registerReceiver(connectivityReceiver,IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
         binding.lifecycleOwner=this
         val recyclerView=binding.recyclerView
         model = ViewModelProviders.of(this).get(ProfileViewModel::class.java)
@@ -39,12 +41,14 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                 details=it.fragmentContainer
                 it.account=this
                 if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && active) ||
-                    (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && it.editButton.isChecked)) {
+                    (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE && enabled.value!!)) {
                     title = getString(R.string.account_details)
                     details?.visibility = View.VISIBLE
                 }
                 else
                     title = getString(R.string.accounts)
+                if(pageIndex==1)
+                    details?.visibility=View.GONE
                 it.cancelButton.setOnClickListener {
                     if(resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE) {
                         title = getString(R.string.accounts)
@@ -53,8 +57,7 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     assignment(position)
                 }
                 it.editButton.setOnClickListener {
-                    if(resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE)
-                        title=getString(R.string.account_details)
+                    title=getString(R.string.account_details)
                     active=true
                     if(!binding.editButton.isChecked)
                         putData()
@@ -63,7 +66,6 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             recyclerView?.let{
                 it.layoutManager=LinearLayoutManager(it.context)
                 it.adapter=DetailAdapter(repository.data)
-                it.scrollToPosition(position)
                 it.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                     override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                         super.onScrollStateChanged(it, newState)
@@ -80,8 +82,12 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     else-> recyclerView?.adapter?.notifyItemChanged(position)
                 }
             })
-            viewContainer.observe(this@CallAPIActivity, Observer<Boolean> {
-                details?.visibility=View.VISIBLE
+            viewContainer.observe(this@CallAPIActivity, Observer<Boolean> { value ->
+                when(value){
+                true->details?.visibility=View.VISIBLE
+                false->if (resources.configuration.orientation==Configuration.ORIENTATION_LANDSCAPE)
+                    details?.visibility=View.VISIBLE
+                }
             })
             statusCheck.observe (this@CallAPIActivity, Observer<Boolean> {value ->
                 binding.statusEdit.text=when(value){
@@ -93,26 +99,20 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         snackBar=Snackbar.make(binding.recyclerView, R.string.not_connected,Snackbar.LENGTH_INDEFINITE)
     }
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        model?.apply {
             if (isConnected) {
                 snackBar?.dismiss()
-                if(retryRequest){
-                    retry()
-                    retryRequest=false
-                }
+                model?.retry()
             }
-            else {
+            else
                 snackBar?.show()
-                retryRequest=true
-            }
-        }
     }
     override fun onResume() {
         super.onResume()
         ConnectivityReceiver.connectivityReceiverListener = this
     }
     override fun onBackPressed() {
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT && details?.visibility == View.VISIBLE) {
+        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
+            details?.visibility == View.VISIBLE) {
             title = getString(R.string.accounts)
             model?.active = false
             details?.visibility = View.GONE
@@ -124,5 +124,12 @@ class CallAPIActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return super.onSupportNavigateUp()
+    }
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(connectivityReceiver)
+    }
+    override fun showDetails() {
+        details?.visibility=View.VISIBLE
     }
 }

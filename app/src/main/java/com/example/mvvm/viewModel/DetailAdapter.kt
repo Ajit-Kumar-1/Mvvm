@@ -16,8 +16,14 @@ import org.json.JSONObject
 
 class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Adapter<DetailAdapter.MyViewHolder>() {
     private val final = StringValues()
+    private var recyclerView:RecyclerView?=null
 
     class MyViewHolder(val binding: EntryBinding) : RecyclerView.ViewHolder(binding.root)
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView=recyclerView
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int)=
         MyViewHolder(EntryBinding.inflate(LayoutInflater.from(parent.context), parent, false))
@@ -47,7 +53,7 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
                     model.let {
                         it.assignment(position)
                         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
-                            it.viewContainer.value=true
+                            (this as ActivityCallBack).showDetails()
                             title = getString(R.string.account_details)
                             it.active = true
                         }
@@ -58,6 +64,7 @@ class DetailAdapter(private val dataArray: ArrayList<String>) : RecyclerView.Ada
                     }
                 }
                 notifyDataSetChanged()
+                recyclerView?.scrollToPosition(position)
             }
         }
     }

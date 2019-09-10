@@ -18,7 +18,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val final= StringValues()
     var repository: AccountRepository = AccountRepository(application)
     var pageIndex=1
-    var retryRequest=false
     var position=0
     var account: MutableLiveData<APIEntity> = MutableLiveData()
     private var originalAccount:APIEntity?=null
@@ -31,7 +30,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var viewContainer:MutableLiveData<Boolean> = MutableLiveData()
     var maleCheck:MutableLiveData<Boolean> = MutableLiveData()
     var femaleCheck:MutableLiveData<Boolean> = MutableLiveData()
+
     init{
+        enabled.value=false
         netCall()
     }
 
@@ -108,10 +109,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             Toast.makeText(getApplication(), "${jsonObject.get(final.CODE)}:" +
                     " ${jsonObject.get(final.MESSAGE)}", Toast.LENGTH_SHORT).show()
         else {
-            if (pageIndex == 1)
-               assignment(0)
-            if (success)
+            if (success) {
+                if (pageIndex == 1) {
+                    assignment(0)
+                    viewContainer.value=false
+                }
                 pageIndex++
+            }
             refreshRecyclerView.value=true
         }
         progress1.value=false
