@@ -133,8 +133,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         progress1.value=false
     }
     fun assignment(position:Int){
-        account.value = retrieveDetails(JSONObject(repository.data[position]))
-        originalAccount = retrieveDetails(JSONObject(repository.data[position]))
+        account.value = retrieveDetails(JSONObject(repository.getData(position)))
+        originalAccount = retrieveDetails(JSONObject(repository.getData(position)))
         maleCheck.value=account.value?.gender==final.MALE
         femaleCheck.value=account.value?.gender==final.FEMALE
         statusCheck.value=account.value?.status==final.ACTIVE
@@ -142,5 +142,5 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         enabled.value = false
     }
     fun retry()=repository.retry()
-    fun getData()=repository.data
+    fun getData()=repository.getData()
 }

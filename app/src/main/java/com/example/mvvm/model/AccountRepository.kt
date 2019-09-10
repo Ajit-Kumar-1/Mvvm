@@ -20,7 +20,7 @@ class AccountRepository (application: Application){
     private val final=StringValues()
     private val queue: RequestQueue = Volley.newRequestQueue(application)
     private var request:JsonObjectRequest?=null
-    var data=ArrayList<String>()
+    private var data=ArrayList<String>()
     private val database: MyDatabase = Room.databaseBuilder(application.applicationContext, MyDatabase::class.java,
         final.DATABASE)
         .fallbackToDestructiveMigration()
@@ -108,4 +108,6 @@ class AccountRepository (application: Application){
     fun retry(){
         queue.add(request)
     }
+    fun getData()=data
+    fun getData(position:Int)=data[position]
 }
