@@ -21,20 +21,18 @@ class AccountRepository (application: Application){
     private val queue: RequestQueue = Volley.newRequestQueue(application)
     private var request:JsonObjectRequest?=null
     private var data=ArrayList<String>()
-    private val database: MyDatabase = Room.databaseBuilder(application.applicationContext, MyDatabase::class.java,
-        final.DATABASE)
-        .fallbackToDestructiveMigration()
-        .build()
+    private val database: MyDatabase = Room.databaseBuilder(application.applicationContext,
+        MyDatabase::class.java, final.DATABASE).fallbackToDestructiveMigration().build()
     private val dataDAO: DataDAO= database.dataDao()
-    private val blankRequest = object:JsonObjectRequest
-        (Method.GET,null,null,null,null){}
+//    private val blankRequest = object:JsonObjectRequest
+//        (Method.GET,null,null,null,null){}
 
     private fun insert(data: APIEntity){
         GlobalScope.launch {
             dataDAO.insert(data)
         }
     }
-    fun putData(putMap:HashMap<String,String>,position:Int,id:Int,callBack: VolleyCallBack) {
+    fun putData(putMap:HashMap<String,String?>,position:Int,id:Int,callBack: VolleyCallBack) {
         request = object : JsonObjectRequest(Method.PUT, "${final.USER_DETAILS_URL}${id}",
             JSONObject(putMap as Map<*, *>), Response.Listener<JSONObject> { response ->
                 if (response.getJSONObject(final.META).getBoolean(final.SUCCESS))
@@ -43,11 +41,9 @@ class AccountRepository (application: Application){
                         data[position] = it.toString()
                     }
                 callBack.onPutResponse(response)
-                request=blankRequest
             },
             Response.ErrorListener {
                 callBack.onPutError(it)
-                request=blankRequest
             }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): MutableMap<String, String> {
@@ -60,22 +56,23 @@ class AccountRepository (application: Application){
         queue.add(request)
     }
     fun getPage(url:String,callBack: VolleyCallBack){
-        request = object : JsonObjectRequest(Method.GET, url, null, Response.Listener<JSONObject> { response ->
-                var jsonObject = response.getJSONObject(final.META)
+        request = object : JsonObjectRequest(Method.GET, url, null,
+            Response.Listener<JSONObject> { response ->
+            var jsonObject = response.getJSONObject(final.META)
             var success=false
                 if (jsonObject.getBoolean(final.SUCCESS)) {
                     val jsonArray = response.getJSONArray(final.RESULT)
                     success=true
-                    var lastID=when(data.size>0){
+                    var previousID=when(data.size>0){
                         true->JSONObject(data.last()).getString(final.ID).toInt()
                         else->0
                     }
                     for (i in 0 until jsonArray.length()) {
                         jsonObject = jsonArray.getJSONObject(i)
-                        if (jsonObject.getString(final.ID).toInt() > lastID) {
+                        if (jsonObject.getString(final.ID).toInt() > previousID) {
                             data.add(jsonArray.getString(i))
                             insert(retrieveDetails(jsonObject))
-                            lastID=JSONObject(data.last()).getString(final.ID).toInt()
+                            previousID=JSONObject(data.last()).getString(final.ID).toInt()
                         }
                         else {
                             success = false
@@ -84,10 +81,8 @@ class AccountRepository (application: Application){
                     }
                 }
                 callBack.getPageResponse(response,success)
-                request=blankRequest
             }, Response.ErrorListener {
                 callBack.getPageError(it)
-                request=blankRequest
             }) {
             @Throws(AuthFailureError::class)
             override fun getHeaders(): MutableMap<String, String> {
@@ -98,12 +93,11 @@ class AccountRepository (application: Application){
         }
         queue.add(request)
     }
-    fun retrieveDetails(jsonObject:JSONObject):APIEntity{
-        jsonObject.let {
-            return APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME), it.getString(final.LAST_NAME),
-                it.getString(final.GENDER), it.getString(final.DOB), it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
-                it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
-        }
+    private fun retrieveDetails(jsonObject:JSONObject):APIEntity= jsonObject.let {
+        APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
+            it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
+            it.getString(final.EMAIL).toLowerCase(Locale.ROOT), it.getString(final.PHONE),
+            it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
     }
     fun retry(){
         queue.add(request)

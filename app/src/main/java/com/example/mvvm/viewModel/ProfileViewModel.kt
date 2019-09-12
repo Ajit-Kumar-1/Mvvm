@@ -13,25 +13,24 @@ import org.json.JSONObject
 import java.util.*
 import kotlin.collections.HashMap
 
-@Suppress("DEPRECATION")
 class ProfileViewModel(application: Application) : AndroidViewModel(application), VolleyCallBack{
 //class ProfileViewModel:ViewModel(),VolleyCallBack{
     private val final= StringValues()
     private var repository: AccountRepository = AccountRepository(application)
     private var originalAccount:APIEntity?=null
-    var account: MutableLiveData<APIEntity> = MutableLiveData()
+    var account= MutableLiveData<APIEntity>()
+    var enabled=MutableLiveData<Boolean>()
+    var progress1=MutableLiveData<Boolean>()
+    var progress2=MutableLiveData<Boolean>()
+    var statusCheck=MutableLiveData<Boolean>()
+    var refreshRecyclerView=MutableLiveData<Boolean>()
+    var viewContainer=MutableLiveData<Boolean>()
+    var maleCheck=MutableLiveData<Boolean>()
+    var femaleCheck=MutableLiveData<Boolean>()
+    var retryRequest= MutableLiveData<Boolean>()
     var pageIndex=1
     var position=0
-    var enabled:MutableLiveData<Boolean> = MutableLiveData()
     var active=false
-    var progress1:MutableLiveData<Boolean> = MutableLiveData()
-    var progress2:MutableLiveData<Boolean> = MutableLiveData()
-    var statusCheck:MutableLiveData<Boolean> = MutableLiveData()
-    var refreshRecyclerView:MutableLiveData<Boolean> = MutableLiveData()
-    var viewContainer:MutableLiveData<Boolean> = MutableLiveData()
-    var maleCheck:MutableLiveData<Boolean> = MutableLiveData()
-    var femaleCheck:MutableLiveData<Boolean> = MutableLiveData()
-    var retryRequest: MutableLiveData<Boolean> = MutableLiveData()
 
     init{
         retryRequest.value=false
@@ -40,38 +39,18 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun putData() {
-        val putMap = HashMap<String, String>()
         account.value?.apply {
-            originalAccount?.let {
-                if (it.firstName != firstName)
-                    putMap[final.FIRST_NAME] = firstName
-                if (it.lastName != lastName)
-                    putMap[final.LAST_NAME] = lastName
-                gender=when(maleCheck.value){
-                    true->final.MALE
-                    else->final.FEMALE
-                }
-                status=when(statusCheck.value){
-                    true->final.ACTIVE
-                    else->final.INACTIVE
-                }
-                if (it.gender != gender)
-                    putMap[final.GENDER] = gender
-                if (it.dob != dob)
-                    putMap[final.DOB] = dob
-                if (it.email != email)
-                    putMap[final.EMAIL] = email
-                if (it.phone != phone)
-                    putMap[final.PHONE] = phone
-                if (it.website != website)
-                    putMap[final.WEBSITE] = website
-                if (it.address != address)
-                    putMap[final.ADDRESS] = address
-                if (it.status != status)
-                    putMap[final.STATUS] = status
+            gender=when(maleCheck.value){
+                true->final.MALE
+                else->final.FEMALE
+            }
+            status=when(statusCheck.value){
+                true->final.ACTIVE
+                else->final.INACTIVE
             }
         }
-        if (putMap != HashMap<String, String>()) {
+        val putMap = putChanges(Pair(account.value,originalAccount))
+        if (putMap != HashMap<String, String?>()) {
             progress2.value = true
             account.value?.id?.let {
                 repository.putData(putMap,position, it,this as VolleyCallBack)
@@ -82,21 +61,43 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         progress1.value=true
         repository.getPage(final.USERS_PAGE_URL+pageIndex,this as VolleyCallBack)
     }
-    private fun retrieveDetails(jsonObject:JSONObject):APIEntity{
-        jsonObject.let {
-            return APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
-                it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
-                it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
-                it.getString(final.PHONE), it.getString(final.WEBSITE), it.getString(final.ADDRESS),
-                it.getString(final.STATUS))
+    private fun retrieveDetails(jsonObject:JSONObject):APIEntity= jsonObject.let {
+        APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
+            it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
+            it.getString(final.EMAIL).toLowerCase(Locale.ROOT), it.getString(final.PHONE),
+            it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
+    }
+    private fun putChanges(data:Pair<APIEntity?,APIEntity?>): java.util.HashMap<String, String?> {
+        val putMap = java.util.HashMap<String, String?>()
+        data.first?.apply {
+            data.second?.let {
+                if (it.firstName?.trim() != firstName?.trim())
+                    putMap[final.FIRST_NAME] = firstName?.trim()
+                if (it.lastName?.trim() != lastName?.trim())
+                    putMap[final.LAST_NAME] = lastName?.trim()
+                if (it.gender?.trim() != gender)
+                    putMap[final.GENDER] = gender?.trim()
+                if (it.dob?.trim() != dob?.trim())
+                    putMap[final.DOB] = dob?.trim()
+                if (it.email?.trim() != email?.trim())
+                    putMap[final.EMAIL] = email?.trim()
+                if (it.phone?.trim() != phone?.trim())
+                    putMap[final.PHONE] = phone?.trim()
+                if (it.website?.trim() != website?.trim())
+                    putMap[final.WEBSITE] = website?.trim()
+                if (it.address?.trim() != address?.trim())
+                    putMap[final.ADDRESS] = address?.trim()
+                if (it.status?.trim() != status?.trim())
+                    putMap[final.STATUS] = status?.trim()
+            }
         }
+        return putMap
     }
     override fun onPutResponse(response: JSONObject) {
         if (response.getJSONObject(final.META).getBoolean(final.SUCCESS)) {
             assignment(position)
             refreshRecyclerView.value=false
             Toast.makeText(getApplication(), R.string.information_updated, Toast.LENGTH_SHORT).show()
-            progress2.value=false
         }
         else {
             val responseArray = response.getJSONArray(final.RESULT)
