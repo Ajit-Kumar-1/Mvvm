@@ -19,6 +19,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val final: StringValues = StringValues()
     private var repository: AccountRepository = AccountRepository(application)
     private var originalAccount:APIEntity? = null
+    private var pageIndex: Int = 1
+    private var position: Int = 0
     var account: MutableLiveData<APIEntity> = MutableLiveData()
     var enabled: MutableLiveData<Boolean> = MutableLiveData()
     var progress1: MutableLiveData<Boolean> = MutableLiveData()
@@ -29,18 +31,16 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     var maleCheck: MutableLiveData<Boolean> = MutableLiveData()
     var femaleCheck: MutableLiveData<Boolean> = MutableLiveData()
     var retryRequest: MutableLiveData<Boolean> = MutableLiveData()
-    var pageIndex: Int = 1
     var active: Boolean = false
-    var position: Int = 0
 
-    init{
+    init {
         retryRequest.value = false
         enabled.value = false
         netCall()
     }
 
     fun putData() {
-        val putMap= HashMap<String,String?>()
+        val putMap = HashMap<String,String?>()
         account.value?.apply {
             originalAccount?.let {
                 gender = when (maleCheck.value){
@@ -88,7 +88,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             repository.apply {
                 response.getJSONObject(final.RESULT).let {
                     insert(data = getEntityFromJSON(jsonObject = it))
-                    data[position] = it.toString()
+                    setData(position = position , value = it.toString())
                 }
             }
             assignment(position)
@@ -119,19 +119,19 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     override fun getPageResponse(response: JSONObject) {
         var jsonObject: JSONObject = response.getJSONObject(final.META)
         if (jsonObject.getBoolean(final.SUCCESS)) {
-            val jsonArray: JSONArray = response.getJSONArray(final.RESULT)
-            var success = true
-            var previousID: Int = when(repository.data.size>0){
-                true -> JSONObject(repository.data.last()).getString(final.ID).toInt()
+            var previousID: Int = when(repository.getDataSize()>0){
+                true -> JSONObject(repository.getLastData()).getString(final.ID).toInt()
                 else -> 0
             }
+            var success = true
+            val jsonArray: JSONArray = response.getJSONArray(final.RESULT)
             for (i in 0 until jsonArray.length()) {
                 jsonObject = jsonArray.getJSONObject(i)
                 if (jsonObject.getString(final.ID).toInt() > previousID)
                     repository.apply{
-                        data.add(jsonArray.getString(i))
+                        addData(jsonArray.getString(i))
                         insert(data = getEntityFromJSON(jsonObject))
-                        previousID = JSONObject(data.last()).getString(final.ID).toInt()
+                        previousID = JSONObject(getLastData()).getString(final.ID).toInt()
                     }
                 else {
                     success = false
@@ -160,8 +160,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun assignment(position:Int){
-        account.value = getEntityFromJSON(JSONObject(repository.data[position]))
-        originalAccount = getEntityFromJSON(JSONObject(repository.data[position]))
+        account.value = getEntityFromJSON(JSONObject(repository.getData(position)))
+        originalAccount = getEntityFromJSON(JSONObject(repository.getData(position)))
         maleCheck.value = account.value?.gender == final.MALE
         femaleCheck.value = account.value?.gender == final.FEMALE
         statusCheck.value = account.value?.status == final.ACTIVE
@@ -169,9 +169,15 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         enabled.value = false
     }
 
-    fun retry(): Unit = repository.retry()
+    fun reassign(): Unit = assignment(position)
 
-    fun getData(): ArrayList<String> = repository.data
+    fun getPosition(): Int = position
+
+    fun getData(): ArrayList<String> = repository.getData()
+
+    fun getPageIndex(): Int = pageIndex
+
+    fun retry(): Unit = repository.retry()
 
     private fun getEntityFromJSON(jsonObject:JSONObject):APIEntity = jsonObject.let {
         APIEntity(it.getString(final.ID).toInt(),

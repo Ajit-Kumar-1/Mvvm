@@ -12,7 +12,7 @@
     android:padding="8dp">
     <androidx.recyclerview.widget.RecyclerView
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:padding="8dp"
+        android:padding="4dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/recyclerView" />
@@ -37,16 +37,18 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal" />
         <LinearLayout
+            android:clickable="true"
+            android:focusable="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:id="@+id/full_details_root">
             <LinearLayout
+                android:focusable="true"
                 android:orientation="horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
                 <Button
-                    android:enabled="@{account.enabled}"
                     android:visibility="@{account.enabled? android.view.View.VISIBLE : android.view.View.INVISIBLE}"
                     android:text="@android:string/cancel"
                     android:layout_gravity="end"

@@ -6,48 +6,78 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.mvvm.model.APIEntity
 import com.example.mvvm.model.DataDAO
 import com.example.mvvm.model.MyDatabase
+import junit.framework.JUnit4TestAdapter
 import kotlinx.coroutines.*
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
+import org.mockito.junit.MockitoJUnitRunner
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.io.IOException
+import kotlin.coroutines.CoroutineContext
 
+@ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [Build.VERSION_CODES.P])
 class RoomTest {
     private var dataDAO: DataDAO? = null
     private var db: MyDatabase? = null
 
-    @Before
-    fun createDb() {
+    init {
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = MyDatabase.getInstance(context)
         dataDAO = db?.dataDao()
     }
 
-    @After
-    @Throws(IOException::class)
-    fun closeDb() {
-        db?.close()
+    @Before
+    fun createDb() {
     }
 
     @Test
     @Throws(Exception::class)
     fun test_1(){
         val sample = TestSamples.accountChangesSamples[0].first.first
-        var actual:APIEntity? = null
-        val deferred: Deferred<APIEntity?> = GlobalScope.async {
-            dataDAO?.insert(sample)
-            dataDAO?.findByLastName(sample.lastName!!)
-        }
         runBlocking {
-            actual = deferred.await()
+            dataDAO?.insert(sample)
+            assertEquals(sample, dataDAO?.findByLastName(sample.lastName!!))
         }
-        assertEquals(sample, actual)
     }
+
+    @Test
+    @Throws(Exception::class)
+    fun test_2() {
+        val sample = TestSamples.accountChangesSamples[0].first.first
+        var actual:APIEntity? = null
+        runBlocking {
+                dataDAO?.insert(sample)
+                actual = dataDAO?.findById(sample.id)
+                assertEquals(sample, actual)
+            }
+    }
+
+    @Test
+    @Throws(Exception::class)
+    fun test_3() {
+        val sample = TestSamples.accountChangesSamples[0].first.first
+        val newSample = TestSamples.accountChangesSamples[1].first.first
+        var actual:APIEntity? = null
+        runBlocking {
+                actual = dataDAO?.run {
+                    insert(sample)
+                    updateData(newSample)
+                    getAll()[10]
+                }
+                assertEquals(newSample, actual)
+            }
+    }
+
+//    @After
+//    fun closeDb(){
+//        db?.close()
+//    }
+
 
 }

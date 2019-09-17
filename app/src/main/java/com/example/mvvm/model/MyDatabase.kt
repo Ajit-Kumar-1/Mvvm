@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase
 abstract class MyDatabase : RoomDatabase() {
     abstract fun dataDao(): DataDAO
 
-    companion object{
+    companion object {
         private var instance: MyDatabase? = null
         fun getInstance(context: Context): MyDatabase? {
             if (instance == null)

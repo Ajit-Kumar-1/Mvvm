@@ -36,7 +36,7 @@ class DetailAdapter(private val dataArray: ArrayList<String>) :
             val model = ViewModelProviders.of(itemView.context as AppCompatActivity)
                 .get(ProfileViewModel::class.java)
             itemView.setBackgroundColor(
-                if (model.position == position &&
+                if (model.getPosition() == position &&
                     (itemView.context as AppCompatActivity).
                         resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
                     Color.argb(255, 255, 240, 120)

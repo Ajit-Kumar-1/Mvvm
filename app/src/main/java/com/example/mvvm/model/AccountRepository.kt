@@ -19,7 +19,7 @@ class AccountRepository (application: Application){
     private val queue: RequestQueue = Volley.newRequestQueue(application)
     private var request:JsonObjectRequest? = null
     private val dataDAO: DataDAO? = MyDatabase.getInstance(application)?.dataDao()
-    var data: java.util.ArrayList<String> = ArrayList()
+    private var data: java.util.ArrayList<String> = ArrayList()
 
     fun insert(data: APIEntity){
         GlobalScope.launch {
@@ -59,6 +59,22 @@ class AccountRepository (application: Application){
 
     fun retry(){
         queue.add(request)
+    }
+
+    fun getData(): ArrayList<String> = data
+
+    fun getData(position:Int): String = data[position]
+
+    fun getDataSize(): Int = data.size
+
+    fun getLastData(): String = data.last()
+
+    fun addData(value:String){
+        data.add(value)
+    }
+
+    fun setData(value:String,position: Int){
+        data[position] = value
     }
 
 }

@@ -53,14 +53,14 @@ class CallAPIActivity : AppCompatActivity(), ActivityCallBack,
                 }
                 else
                     title = getString(R.string.accounts)
-                if(pageIndex == 1)
+                if(getPageIndex() == 1)
                     details?.visibility = View.GONE
                 it.cancelButton.setOnClickListener {
                     if(resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                         title = getString(R.string.accounts)
                         active = false
                     }
-                    assignment(position)
+                    reassign()
                 }
                 it.editButton.setOnClickListener {
                     title = getString(R.string.account_details)
@@ -77,15 +77,15 @@ class CallAPIActivity : AppCompatActivity(), ActivityCallBack,
                         super.onScrollStateChanged(it, newState)
                         if (!it.canScrollVertically(1)) {
                             netCall()
-                            if (pageIndex > 1)
+                            if (getPageIndex() > 1)
                                 binding.progressSpinner.y = it.height*0.75.toFloat()
                         }
                     }})
-                it.scrollToPosition(position)
+                it.scrollToPosition(getPosition())
             }
             refreshRecyclerView.observe(this@CallAPIActivity, Observer<Boolean> {value ->
                 if (value) recyclerView.adapter?.notifyDataSetChanged()
-                else recyclerView.adapter?.notifyItemChanged(position)
+                else recyclerView.adapter?.notifyItemChanged(getPosition())
             })
             viewContainer.observe(this@CallAPIActivity, Observer<Boolean> { value ->
                 if (value) details?.visibility=View.VISIBLE
@@ -141,7 +141,7 @@ class CallAPIActivity : AppCompatActivity(), ActivityCallBack,
             details?.visibility == View.VISIBLE) {
             title = getString(R.string.accounts)
             model?.active = false
-            model?.assignment(model?.position!!)
+            model?.reassign()
             details?.visibility = View.GONE
         }
         else
