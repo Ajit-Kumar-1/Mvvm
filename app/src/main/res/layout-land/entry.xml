@@ -10,10 +10,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingEnd="8dp"
-        android:paddingStart="8dp"
-        android:paddingRight="8dp"
-        android:paddingLeft="8dp">
+        android:paddingEnd="4dp"
+        android:paddingStart="4dp"
+        android:paddingRight="4dp"
+        android:paddingLeft="4dp">
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -29,8 +29,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <ImageView
-                android:paddingEnd="6dp"
-                android:paddingRight="6dp"
+                android:paddingEnd="4dp"
+                android:paddingRight="4dp"
                 android:contentDescription="@string/avatar"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"

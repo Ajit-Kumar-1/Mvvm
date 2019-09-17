@@ -6,13 +6,22 @@ import org.json.JSONObject
 import java.util.*
 
 object TestMethods {
-    private val final= StringValues()
-    fun retrieveDetails(jsonObject:JSONObject):APIEntity= jsonObject.let {
-        APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
-            it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
-            it.getString(final.EMAIL).toLowerCase(Locale.ROOT), it.getString(final.PHONE),
-            it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
+
+    private val final = StringValues()
+
+    fun getEntityFromJSON(jsonObject:JSONObject):APIEntity = jsonObject.let {
+        APIEntity(it.getString(final.ID).toInt(),
+            it.getString(final.FIRST_NAME).trim(),
+            it.getString(final.LAST_NAME).trim(),
+            it.getString(final.GENDER).trim(),
+            it.getString(final.DOB).trim(),
+            it.getString(final.EMAIL).toLowerCase(Locale.ROOT),
+            it.getString(final.PHONE).trim(),
+            it.getString(final.WEBSITE).trim(),
+            it.getString(final.ADDRESS).trim(),
+            it.getString(final.STATUS).trim())
     }
+
     fun putChanges(data:Pair<APIEntity?,APIEntity?>): HashMap<String, String?> {
         val putMap = HashMap<String, String?>()
         data.first?.apply {
@@ -39,4 +48,5 @@ object TestMethods {
         }
         return putMap
     }
+
 }

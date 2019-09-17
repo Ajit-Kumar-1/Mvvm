@@ -1,7 +1,6 @@
 package com.example.mvvm.model
 
 import android.app.Application
-import androidx.room.Room
 import com.android.volley.AuthFailureError
 import com.android.volley.RequestQueue
 import com.android.volley.Response
@@ -11,97 +10,55 @@ import com.example.mvvm.viewModel.VolleyCallBack
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.util.*
+import java.util.HashMap
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class AccountRepository (application: Application){
 
-    private val final=StringValues()
+    private val final: StringValues = StringValues()
     private val queue: RequestQueue = Volley.newRequestQueue(application)
-    private var request:JsonObjectRequest?=null
-    private var data=ArrayList<String>()
-    private val database: MyDatabase = Room.databaseBuilder(application.applicationContext,
-        MyDatabase::class.java, final.DATABASE).fallbackToDestructiveMigration().build()
-    private val dataDAO: DataDAO= database.dataDao()
-//    private val blankRequest = object:JsonObjectRequest
-//        (Method.GET,null,null,null,null){}
+    private var request:JsonObjectRequest? = null
+    private val dataDAO: DataDAO? = MyDatabase.getInstance(application)?.dataDao()
+    var data: java.util.ArrayList<String> = ArrayList()
 
-    private fun insert(data: APIEntity){
+    fun insert(data: APIEntity){
         GlobalScope.launch {
-            dataDAO.insert(data)
+            dataDAO?.insert(data)
         }
     }
-    fun putData(putMap:HashMap<String,String?>,position:Int,id:Int,callBack: VolleyCallBack) {
-        request = object : JsonObjectRequest(Method.PUT, "${final.USER_DETAILS_URL}${id}",
-            JSONObject(putMap as Map<*, *>), Response.Listener<JSONObject> { response ->
-                if (response.getJSONObject(final.META).getBoolean(final.SUCCESS))
-                    response.getJSONObject(final.RESULT).let {
-                        insert(retrieveDetails(it))
-                        data[position] = it.toString()
-                    }
-                callBack.onPutResponse(response)
-            },
-            Response.ErrorListener {
-                callBack.onPutError(it)
-            }) {
+
+    fun putData(payload:JSONObject, id:Int, callBack: VolleyCallBack) {
+        request = object : JsonObjectRequest(
+            Method.PUT,
+            "${final.USER_DETAILS_URL}${id}",
+            payload,
+            Response.Listener<JSONObject>(callBack::onPutResponse),
+            Response.ErrorListener(callBack::onPutError)
+        ) {
             @Throws(AuthFailureError::class)
-            override fun getHeaders(): MutableMap<String, String> {
-                val headers = HashMap<String, String>()
-                headers[final.ACCESS_TOKEN_KEY] = final.accessToken
-                headers[final.CONTENT_TYPE_KEY] = final.CONTENT_TYPE_VALUE
-                return headers
-            }
+            override fun getHeaders(): HashMap<String, String>
+                = hashMapOf(final.ACCESS_TOKEN_KEY to final.accessToken)
         }
         queue.add(request)
     }
-    fun getPage(url:String,callBack: VolleyCallBack){
-        request = object : JsonObjectRequest(Method.GET, url, null,
-            Response.Listener<JSONObject> { response ->
-            var jsonObject = response.getJSONObject(final.META)
-            var success=false
-                if (jsonObject.getBoolean(final.SUCCESS)) {
-                    val jsonArray = response.getJSONArray(final.RESULT)
-                    success=true
-                    var previousID=when(data.size>0){
-                        true->JSONObject(data.last()).getString(final.ID).toInt()
-                        else->0
-                    }
-                    for (i in 0 until jsonArray.length()) {
-                        jsonObject = jsonArray.getJSONObject(i)
-                        if (jsonObject.getString(final.ID).toInt() > previousID) {
-                            data.add(jsonArray.getString(i))
-                            insert(retrieveDetails(jsonObject))
-                            previousID=JSONObject(data.last()).getString(final.ID).toInt()
-                        }
-                        else {
-                            success = false
-                            break
-                        }
-                    }
-                }
-                callBack.getPageResponse(response,success)
-            }, Response.ErrorListener {
-                callBack.getPageError(it)
-            }) {
+
+    fun getPage(pageIndex:Int, callBack: VolleyCallBack){
+        request = object : JsonObjectRequest(
+            Method.GET,
+            final.USERS_PAGE_URL+pageIndex,
+            null,
+            Response.Listener<JSONObject>(callBack::getPageResponse),
+            Response.ErrorListener(callBack::getPageError)
+        ) {
             @Throws(AuthFailureError::class)
-            override fun getHeaders(): MutableMap<String, String> {
-                val headers = HashMap<String, String>()
-                headers[final.ACCESS_TOKEN_KEY] = final.accessToken
-                return headers
-            }
+            override fun getHeaders(): HashMap<String, String>
+                = hashMapOf(final.ACCESS_TOKEN_KEY to final.accessToken)
         }
         queue.add(request)
     }
-    private fun retrieveDetails(jsonObject:JSONObject):APIEntity= jsonObject.let {
-        APIEntity(it.getString(final.ID).toInt(), it.getString(final.FIRST_NAME),
-            it.getString(final.LAST_NAME), it.getString(final.GENDER), it.getString(final.DOB),
-            it.getString(final.EMAIL).toLowerCase(Locale.ROOT), it.getString(final.PHONE),
-            it.getString(final.WEBSITE), it.getString(final.ADDRESS), it.getString(final.STATUS))
-    }
+
     fun retry(){
         queue.add(request)
     }
-    fun getData()=data
-    fun getData(position:Int)=data[position]
+
 }

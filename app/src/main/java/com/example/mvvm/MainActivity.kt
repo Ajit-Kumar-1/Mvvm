@@ -15,6 +15,10 @@ class MainActivity : AppCompatActivity() {
             supportFragmentManager.beginTransaction().add(R.id.fragment_container, SignInFragment(),
                 finalValues.HOME ).commit()
     }
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return super.onSupportNavigateUp()
+    }
     override fun onBackPressed() {
         if(supportFragmentManager.findFragmentByTag(finalValues.HOME)!!.isVisible)
             finish()
@@ -23,9 +27,5 @@ class MainActivity : AppCompatActivity() {
             setCustomAnimations(R.anim.left_to_right,R.anim.right_to_left)
             replace(R.id.fragment_container, SignInFragment(),finalValues.HOME).commit()
         }
-    }
-    override fun onSupportNavigateUp(): Boolean {
-        onBackPressed()
-        return super.onSupportNavigateUp()
     }
 }

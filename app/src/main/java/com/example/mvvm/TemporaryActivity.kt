@@ -22,15 +22,14 @@ class TemporaryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_temporary)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-        val db = Room.databaseBuilder(applicationContext,
-            MyDatabase::class.java, "data-list.db").build()
+        val db =MyDatabase.getInstance(application)
         var data: APIEntity?=null
         findViewById<EditText>(R.id.findByLastName).requestFocus()
         (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).
             toggleSoftInput(InputMethodManager.SHOW_FORCED,0)
         findViewById<Button>(R.id.getEntry).setOnClickListener {
             val deferred=GlobalScope.async {
-                db.dataDao().findByLastName(findViewById<EditText>(R.id.findByLastName).
+                db?.dataDao()?.findByLastName(findViewById<EditText>(R.id.findByLastName).
                     text.trim().toString())
             }
             runBlocking { data=deferred.await() }

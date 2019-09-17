@@ -5,7 +5,7 @@ import com.example.mvvm.model.StringValues
 
 object TestSamples {
     private val final=StringValues()
-    var accountChangesSamples=ArrayList<Pair<Pair<APIEntity,APIEntity>,HashMap<String,String>>>()
+    var accountChangesSamples=ArrayList<Pair<Pair<APIEntity,APIEntity>,HashMap<String,String?>>>()
     var conversionSamples=ArrayList<Pair<String,APIEntity>>()
 
     init {
@@ -40,7 +40,8 @@ object TestSamples {
                     null,null,null,"sbc.aus.com",null,"active"))
             , HashMap()))
         accountChangesSamples[2].second.let {
-            it[final.EMAIL]="sambillings@example.com"
+            it[final.EMAIL] = "sambillings@example.com"
+            it[final.WEBSITE] = null
         }
         conversionSamples.add(Pair(
                 "{\"id\":\"2\",\"first_name\":\"Veers\",\"last_name\":\"Corwin\",\"" + "gender\":" +

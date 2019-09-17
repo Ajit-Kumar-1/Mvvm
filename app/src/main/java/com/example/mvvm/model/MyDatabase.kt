@@ -8,17 +8,17 @@ import androidx.room.RoomDatabase
 @Database(entities = [APIEntity::class], version = 1)
 abstract class MyDatabase : RoomDatabase() {
     abstract fun dataDao(): DataDAO
-    private var instance: MyDatabase? = null
 
-    fun getInstance(context: Context): MyDatabase? {
-        if (instance == null) {
-            synchronized(MyDatabase::class) {
-                instance = Room.databaseBuilder(context.applicationContext,
-                    MyDatabase::class.java, "data-list.db")
-                    .fallbackToDestructiveMigration()
-                    .build()
-            }
+    companion object{
+        private var instance: MyDatabase? = null
+        fun getInstance(context: Context): MyDatabase? {
+            if (instance == null)
+                synchronized(MyDatabase::class) {
+                    instance = Room.databaseBuilder(context.applicationContext,
+                        MyDatabase::class.java, "data-list.db")
+                        .fallbackToDestructiveMigration().build()
+                }
+            return instance
         }
-        return instance
     }
 }
