@@ -1,80 +1,71 @@
 package com.example.mvvm.model
 
 import android.app.Application
-import com.android.volley.AuthFailureError
-import com.android.volley.RequestQueue
-import com.android.volley.Response
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import com.example.mvvm.viewModel.VolleyCallBack
+import androidx.lifecycle.LiveData
+import com.example.mvvm.viewModel.ViewModelCallBack
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
-import java.util.HashMap
-import kotlin.collections.ArrayList
+import retrofit2.Call
+import retrofit2.Callback
 
-class AccountRepository (application: Application){
+class AccountRepository(application: Application) {
 
-    private val final: StringValues = StringValues()
-    private val queue: RequestQueue = Volley.newRequestQueue(application)
-    private var request:JsonObjectRequest? = null
-    private val dataDAO: DataDAO? = MyDatabase.getInstance(application)?.dataDao()
-    private var data: java.util.ArrayList<String> = ArrayList()
-
-    fun insert(data: APIEntity){
-        GlobalScope.launch {
-            dataDAO?.insert(data)
-        }
+    companion object {
+        private const val GET_PAGE: String = "getPage"
+        private const val PUT_CHANGES: String = "putChanges"
     }
 
-    fun putData(payload:JSONObject, id:Int, callBack: VolleyCallBack) {
-        request = object : JsonObjectRequest(
-            Method.PUT,
-            "${final.USER_DETAILS_URL}${id}",
-            payload,
-            Response.Listener<JSONObject>(callBack::onPutResponse),
-            Response.ErrorListener(callBack::onPutError)
-        ) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): HashMap<String, String>
-                = hashMapOf(final.ACCESS_TOKEN_KEY to final.accessToken)
-        }
-        queue.add(request)
+    private val accountDAO: AccountDAO? = AccountDatabase.getInstance(application)?.accountDAO()
+    private val service: AccountNetworkService? =
+        AccountNetworkService.getInstance()?.create(AccountNetworkService::class.java)
+
+    private var id: Int = 0
+    private var pageIndex: Int = 1
+    private var payload: JSONObject? = null
+    private var viewModelCallBack: ViewModelCallBack? = null
+    private var retryRequest: String = "none"
+
+    fun insertAccountIntoDatabase(data: AccountEntity) {
+        GlobalScope.launch { accountDAO?.insert(data) }
     }
 
-    fun getPage(pageIndex:Int, callBack: VolleyCallBack){
-        request = object : JsonObjectRequest(
-            Method.GET,
-            final.USERS_PAGE_URL+pageIndex,
-            null,
-            Response.Listener<JSONObject>(callBack::getPageResponse),
-            Response.ErrorListener(callBack::getPageError)
-        ) {
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): HashMap<String, String>
-                = hashMapOf(final.ACCESS_TOKEN_KEY to final.accessToken)
-        }
-        queue.add(request)
+    fun retryNetworkCall() {
+        if (retryRequest == GET_PAGE) getPageRequest(pageIndex, viewModelCallBack)
+        else if (retryRequest == PUT_CHANGES) putChangesRequest(payload, id, viewModelCallBack)
     }
 
-    fun retry(){
-        queue.add(request)
+    fun getPageRequest(pageIndex: Int, callBack: ViewModelCallBack?) {
+        this.pageIndex = pageIndex
+        this.viewModelCallBack = callBack
+        retryRequest = GET_PAGE
+        service?.getAccountsPage(pageIndex = pageIndex)?.enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: retrofit2.Response<String>) {
+                response.body()?.let { callBack?.getPageResponse(JSONObject(it)) }
+            }
+
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                callBack?.getPageError(throwable = t)
+            }
+        })
     }
 
-    fun getData(): ArrayList<String> = data
+    fun putChangesRequest(payload: JSONObject?, id: Int, callBack: ViewModelCallBack?) {
+        this.id = id
+        this.payload = payload
+        this.viewModelCallBack = callBack
+        retryRequest = PUT_CHANGES
+        service?.putAccountDetails(id, payload.toString())?.enqueue(object : Callback<String> {
+            override fun onResponse(call: Call<String>, response: retrofit2.Response<String>) {
+                response.body()?.let { callBack?.onPutResponse(JSONObject(it)) }
+            }
 
-    fun getData(position:Int): String = data[position]
-
-    fun getDataSize(): Int = data.size
-
-    fun getLastData(): String = data.last()
-
-    fun addData(value:String){
-        data.add(value)
+            override fun onFailure(call: Call<String>, t: Throwable) {
+                callBack?.onPutError(throwable = t)
+            }
+        })
     }
 
-    fun setData(value:String,position: Int){
-        data[position] = value
-    }
+    fun getData(): LiveData<MutableList<AccountEntity>>? = accountDAO?.getAll()
 
 }

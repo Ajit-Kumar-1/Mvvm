@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:title="@string/save"
-          android:id="@+id/save_account"
-          app:showAsAction="always"/>
-    <item android:title="@string/cancel"
-          android:id="@+id/cancel_changes"
-          app:showAsAction="always"/>
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/save_account"
+        android:title="@string/save"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/cancel_changes"
+        android:title="@string/cancel"
+        app:showAsAction="always" />
 </menu>

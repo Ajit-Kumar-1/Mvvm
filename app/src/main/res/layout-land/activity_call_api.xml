@@ -1,280 +1,326 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-        <data>
-            <variable name="account" type="com.example.mvvm.viewModel.ProfileViewModel" />
-            <variable name="View" type="android.view.View" />
-        </data>
+    <data>
 
-<LinearLayout
-    android:background="#ffffff"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:baselineAligned="false">
+        <variable
+            name="account"
+            type="com.example.mvvm.viewModel.AccountViewModel" />
 
-    <FrameLayout
+        <variable
+            name="View"
+            type="android.view.View" />
+    </data>
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="0.9"
-        android:padding="4dp">
+        android:background="#ffffff"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="#efefef"
-            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            android:layout_weight="1">
 
-        <ProgressBar
-            android:id="@+id/progressSpinner"
-            style="?android:attr/progressBarStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:visibility="@{account.progress1? android.view.View.VISIBLE : android.view.View.INVISIBLE}" />
-    </FrameLayout>
-    <FrameLayout
-        android:background="@drawable/big_rounded_edges"
-        android:padding="4dp"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="0.6"
-        android:id="@+id/fragment_container"
-        android:visibility="visible">
-        <ProgressBar
-                android:visibility="@{account.progress2? android.view.View.VISIBLE : android.view.View.INVISIBLE}"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                app:layout_constrainedHeight="true"
+                app:layout_constraintBottom_toTopOf="@+id/progressSpinner"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintVertical_bias="0" />
+
+            <ProgressBar
+                android:id="@+id/progressSpinner"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:visibility="@{account.paginationProgressSpinnerVisibility? android.view.View.VISIBLE : android.view.View.GONE}"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/recyclerView"
+                app:layout_constraintVertical_bias="1" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="0.6"
+            android:background="@drawable/big_rounded_edges"
+            android:padding="4dp"
+            android:visibility="visible">
+
+            <ProgressBar
                 android:id="@+id/progressSpinner2"
                 style="?android:attr/progressBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal" />
-        <LinearLayout
-            android:clickable="true"
-            android:focusable="true"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:padding="4dp"
-            android:orientation="vertical"
-            android:id="@+id/full_details_root">
+                android:layout_gravity="center_horizontal"
+                android:visibility="@{account.putRequestProgressSpinnerVisibility? android.view.View.VISIBLE : android.view.View.GONE}" />
+
             <LinearLayout
+                android:id="@+id/full_details_root"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:clickable="true"
                 android:focusable="true"
-                android:orientation="horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-                <Button
-                        android:visibility="@{account.enabled? android.view.View.VISIBLE :android.view.View.INVISIBLE}"
-                        android:text="@android:string/cancel"
-                        android:layout_gravity="end"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/cancel_button" />
-                <TextView
-                        android:text="@{&quot;ID: &quot;+account.account.id}"
-                        android:layout_width="0dp"
-                        android:gravity="center"
-                        android:layout_height="match_parent"
-                        android:id="@+id/id_display"
-                        android:layout_weight="1" />
-                <ToggleButton
-                        android:checked="@={account.enabled}"
-                        android:textOff="@string/edit"
-                        android:textOn="@string/save"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:id="@+id/edit_button" />
-            </LinearLayout>
-            <ScrollView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:orientation="vertical"
+                android:padding="4dp">
+
                 <LinearLayout
-                    android:paddingEnd="4dp"
-                    android:paddingStart="4dp"
-                    android:orientation="horizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:baselineAligned="false"
-                    android:id="@+id/full_details_edit_view">
-                    <LinearLayout
-                        android:orientation="vertical"
-                        android:layout_width="0dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/cancel_button"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.25"
-                        android:id="@+id/labels">
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/first_name"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/first_name_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/last_name"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/last_name_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/gender"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/gender_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/date_of_birth"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/dob_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/email_colon"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/email_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/phone"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/phone_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/website"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/website_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/address"
-                            android:layout_width="match_parent"
-                            android:layout_height="92dp"
-                            android:id="@+id/address_label" />
-                        <TextView
-                            android:gravity="center_vertical"
-                            android:text="@string/status"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/status_label" />
-                    </LinearLayout>
-                    <LinearLayout
-                        android:orientation="vertical"
+                        android:layout_gravity="end"
+                        android:text="@android:string/cancel"
+                        android:visibility="@{account.enableAccountDetailEdit? android.view.View.VISIBLE :android.view.View.INVISIBLE}" />
+
+                    <TextView
+                        android:id="@+id/id_display"
                         android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="@{&quot;ID: &quot;+account.accountCurrentDetails.id}" />
+
+                    <ToggleButton
+                        android:id="@+id/edit_button"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="0.75"
-                        android:id="@+id/editable">
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.firstName}"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:inputType="textPersonName"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/first_name_edit" />
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.lastName}"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="textPersonName"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/last_name_edit" />
-                        <RadioGroup
-                            android:gravity="center"
-                            android:paddingStart="10dp"
-                            android:paddingEnd="10dp"
-                            android:enabled="@{account.enabled}"
-                            android:orientation="horizontal"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/gender_edit">
-                            <RadioButton
-                                android:checked="@={account.femaleCheck}"
-                                android:enabled="@{account.enabled}"
-                                android:text="@string/female"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:id="@+id/female_option"
-                                android:layout_weight="1" />
-                            <RadioButton
-                                android:checked="@={account.maleCheck}"
-                                android:enabled="@{account.enabled}"
-                                android:text="@string/male"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:id="@+id/male_option"
-                                android:layout_weight="1" />
-                        </RadioGroup>
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.dob}"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:inputType="phone"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/dob_edit" />
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.email}"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:inputType="textEmailAddress"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/email_edit" />
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.phone}"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:inputType="phone"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/phone_edit" />
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.website}"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:inputType="textPersonName"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/website_edit" />
-                        <EditText
-                            android:importantForAutofill="no"
-                            android:hint="@string/blank"
-                            android:text="@={account.account.address}"
-                            android:layout_width="match_parent"
-                            android:layout_height="92dp"
-                            android:inputType="textMultiLine"
-                            android:gravity="start|top"
-                            android:ems="10"
-                            android:enabled="@{account.enabled}"
-                            android:id="@+id/address_edit" />
-                        <Switch
-                            android:checked="@={account.statusCheck}"
-                            android:text="@{account.account.status}"
-                            android:textOn="@string/active"
-                            android:textOff="@string/inactive"
-                            android:textSize="24sp"
-                            android:enabled="@{account.enabled}"
-                            android:layout_width="match_parent"
-                            android:layout_height="46dp"
-                            android:id="@+id/status_edit" />
-                    </LinearLayout>
+                        android:checked="@={account.enableAccountDetailEdit}"
+                        android:textOff="@string/edit"
+                        android:textOn="@string/save" />
                 </LinearLayout>
-            </ScrollView>
-        </LinearLayout>
-    </FrameLayout>
-</LinearLayout>
+
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:id="@+id/full_details_edit_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp">
+
+                        <LinearLayout
+                            android:id="@+id/labels"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.25"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/first_name_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/first_name" />
+
+                            <TextView
+                                android:id="@+id/last_name_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/last_name" />
+
+                            <TextView
+                                android:id="@+id/gender_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/gender" />
+
+                            <TextView
+                                android:id="@+id/dob_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/date_of_birth" />
+
+                            <TextView
+                                android:id="@+id/email_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/email_colon" />
+
+                            <TextView
+                                android:id="@+id/phone_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/phone" />
+
+                            <TextView
+                                android:id="@+id/website_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/website" />
+
+                            <TextView
+                                android:id="@+id/address_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="92dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/address" />
+
+                            <TextView
+                                android:id="@+id/status_label"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:gravity="center_vertical"
+                                android:text="@string/status" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:id="@+id/editable"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.75"
+                            android:orientation="vertical">
+
+                            <EditText
+                                android:id="@+id/first_name_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="textPersonName"
+                                android:text="@={account.accountCurrentDetails.firstName}" />
+
+                            <EditText
+                                android:id="@+id/last_name_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="textPersonName"
+                                android:text="@={account.accountCurrentDetails.lastName}" />
+
+                            <RadioGroup
+                                android:id="@+id/gender_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:gravity="center"
+                                android:orientation="horizontal"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp">
+
+                                <RadioButton
+                                    android:id="@+id/female_option"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:checked="@={account.femaleRadioButtonValue}"
+                                    android:enabled="@{account.enableAccountDetailEdit}"
+                                    android:text="@string/female" />
+
+                                <RadioButton
+                                    android:id="@+id/male_option"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:checked="@={account.maleRadioButtonValue}"
+                                    android:enabled="@{account.enableAccountDetailEdit}"
+                                    android:text="@string/male" />
+                            </RadioGroup>
+
+                            <EditText
+                                android:id="@+id/dob_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="phone"
+                                android:text="@={account.accountCurrentDetails.dob}" />
+
+                            <EditText
+                                android:id="@+id/email_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="textEmailAddress"
+                                android:text="@={account.accountCurrentDetails.email}" />
+
+                            <EditText
+                                android:id="@+id/phone_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="phone"
+                                android:text="@={account.accountCurrentDetails.phone}" />
+
+                            <EditText
+                                android:id="@+id/website_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="textPersonName"
+                                android:text="@={account.accountCurrentDetails.website}" />
+
+                            <EditText
+                                android:id="@+id/address_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="92dp"
+                                android:ems="10"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:gravity="start|top"
+                                android:hint="@string/blank"
+                                android:importantForAutofill="no"
+                                android:inputType="textMultiLine"
+                                android:text="@={account.accountCurrentDetails.address}" />
+
+                            <Switch
+                                android:id="@+id/status_edit"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:checked="@={account.statusSwitchValue}"
+                                android:enabled="@{account.enableAccountDetailEdit}"
+                                android:textOff="@string/inactive"
+                                android:textOn="@string/active"
+                                android:textSize="24sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </ScrollView>
+            </LinearLayout>
+        </FrameLayout>
+    </LinearLayout>
 </layout>
