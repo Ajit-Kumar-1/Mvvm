@@ -110,7 +110,7 @@ class FirstUnitTest {
         // Check if correct data assigned
         viewModel.apply {
             loadInitialPage()
-            assertEquals(0, getRecyclerViewPosition())
+            assertEquals(0, getSelectedItemPosition())
         }
     }
 

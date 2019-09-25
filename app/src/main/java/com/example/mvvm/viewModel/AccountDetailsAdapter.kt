@@ -43,7 +43,7 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         bindData(binding = holder.binding, position = position)
-        if (position == 0 && model.getRecyclerViewPosition() == 0 &&
+        if (position == 0 && model.getSelectedItemPosition() == 0 &&
             model.enableAccountDetailEdit.value == false
         )
             model.loadInitialAccount(accountData?.get(0))
@@ -68,6 +68,8 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
                 recyclerView.scrollToPosition(position)
             }
         }
+        if (position == itemCount - 1)
+            recyclerView.scrollToPosition(model.getSelectedItemPosition())
     }
 
     override fun getItemCount(): Int = accountData?.size ?: 0
@@ -84,7 +86,7 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
 
     private fun highlightColor(position: Int): Int =
         if ((context as AppCompatActivity).resources.configuration.orientation
-            == Configuration.ORIENTATION_LANDSCAPE && model.getRecyclerViewPosition() == position
+            == Configuration.ORIENTATION_LANDSCAPE && model.getSelectedItemPosition() == position
         ) R.color.yellowHighlight
         else Color.TRANSPARENT
 

@@ -56,24 +56,25 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     }
 
     private fun setLayoutTitleAndVisibility(model: AccountViewModel) {
-        if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                    && model.viewDetailsContainerOnPortrait.value!!) ||
-            (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    && model.enableAccountDetailEdit.value!!)
-        ) {
-            title = getString(R.string.account_details)
-            fullDetailsContainer.visibility = View.VISIBLE
-        } else {
-            title = getString(R.string.accounts)
-            if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                return
-        }
-        if (!model.dataExists)
-            fullDetailsContainer.visibility = View.GONE
+        if (model.dataExists) {
+            if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                        && model.viewDetailsContainerOnPortrait.value!!) ||
+                (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                        && model.enableAccountDetailEdit.value!!)
+            ) {
+                title = getString(R.string.account_details)
+                fullDetailsContainer.visibility = View.VISIBLE
+            } else {
+                title = getString(R.string.accounts)
+                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
+                    return
+            }
+        } else fullDetailsContainer.visibility = View.GONE
+
     }
 
-    private fun setButtonListeners(model: AccountViewModel) {
-        model.apply {
+    private fun setButtonListeners(model: AccountViewModel): Unit =
+        model.run {
             binding.cancelButton.setOnClickListener {
                 if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                     title = getString(R.string.accounts)
@@ -87,10 +88,9 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                 if (!binding.editButton.isChecked) putAccountDetailChanges()
             }
         }
-    }
 
-    private fun setUpRecyclerView(recyclerView: RecyclerView, model: AccountViewModel) {
-        recyclerView.apply {
+    private fun setUpRecyclerView(recyclerView: RecyclerView, model: AccountViewModel): Unit =
+        recyclerView.run {
             layoutManager = LinearLayoutManager(context)
             adapter = AccountDetailsAdapter(model.getData()?.value)
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -103,10 +103,12 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                 }
             })
         }
-    }
 
-    private fun setObservers(activity: AppCompatActivity, model: AccountViewModel) {
-        model.apply {
+    private fun setObservers(activity: AppCompatActivity, model: AccountViewModel): Unit =
+        model.run {
+            getData()?.observe(activity, Observer<MutableList<AccountEntity>> {
+                (recyclerView.adapter as AccountDetailsAdapter).setData(it)
+            })
             viewDetailsContainerOnPortrait.observe(activity, Observer<Boolean> {
                 fullDetailsContainer.visibility = if (dataExists &&
                     (it || resources.configuration.orientation ==
@@ -120,20 +122,15 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             retryNetworkRequest.observe(activity, Observer<Boolean> {
                 snackBar.apply { if (it) show() else dismiss() }
             })
-            getData()?.observe(activity, Observer<MutableList<AccountEntity>> {
-                (recyclerView.adapter as AccountDetailsAdapter).setData(it)
-            })
         }
-    }
 
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        model.apply {
+    override fun onNetworkConnectionChanged(isConnected: Boolean): Unit =
+        model.run {
             if (isConnected) {
                 if (retryNetworkRequest.value!!) retryNetworkRequest()
                 retryNetworkRequest.value = false
             } else retryNetworkRequest.value = true
         }
-    }
 
     override fun onResume() {
         super.onResume()
@@ -145,7 +142,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         return super.onSupportNavigateUp()
     }
 
-    override fun onBackPressed() {
+    override fun onBackPressed(): Unit =
         if (fullDetailsContainer.visibility == View.VISIBLE &&
             resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         ) {
@@ -153,9 +150,10 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             model.viewDetailsContainerOnPortrait.value = false
             model.reassignAccountDetails()
             fullDetailsContainer.visibility = View.GONE
-        } else super.onBackPressed()
-        overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
-    }
+        } else {
+            super.onBackPressed()
+            overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
+        }
 
     override fun onDestroy() {
         super.onDestroy()

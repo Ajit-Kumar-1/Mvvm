@@ -43,7 +43,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     private val repository: AccountRepository = AccountRepository(application)
     private var pageIndex: Int = 1
-    private var recyclerViewPosition: Int = 0
+    private var selectedItemPosition: Int = 0
     private var accountOriginalDetails: AccountEntity? = null
     var accountCurrentDetails: MutableLiveData<AccountEntity> = MutableLiveData()
     var paginationProgressSpinnerVisibility: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -177,7 +177,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) {
             getAccountEntityFromJSON(response.getJSONObject(RESULT_KEY)).let {
                 repository.insertAccountIntoDatabase(it)
-                assignAccountDetails(account = it, position = recyclerViewPosition)
+                assignAccountDetails(account = it, position = selectedItemPosition)
             }
             Toast.makeText(getApplication(), R.string.information_updated, Toast.LENGTH_SHORT)
                 .show()
@@ -207,14 +207,14 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         maleRadioButtonValue.value = accountCurrentDetails.value?.gender == MALE
         femaleRadioButtonValue.value = accountCurrentDetails.value?.gender == FEMALE
         statusSwitchValue.value = accountCurrentDetails.value?.status == ACTIVE
-        this.recyclerViewPosition = position
+        this.selectedItemPosition = position
         enableAccountDetailEdit.value = false
     }
 
     fun reassignAccountDetails(): Unit =
-        assignAccountDetails(accountOriginalDetails, recyclerViewPosition)
+        assignAccountDetails(accountOriginalDetails, selectedItemPosition)
 
-    fun getRecyclerViewPosition(): Int = recyclerViewPosition
+    fun getSelectedItemPosition(): Int = selectedItemPosition
 
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
