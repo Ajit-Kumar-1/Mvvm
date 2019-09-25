@@ -11,7 +11,6 @@ import com.example.mvvm.model.AccountRepository
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
-import kotlin.collections.HashMap
 
 class AccountViewModel(application: Application) : AndroidViewModel(application),
     ViewModelCallBack {
@@ -67,19 +66,39 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         repository.getPageRequest(pageIndex = pageIndex, callBack = this as ViewModelCallBack)
     }
 
-    override fun getPageResponse(response: JSONObject) {
+    override fun getAccountsPageResponse(response: JSONObject) {
         if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) {
             if (getDataFromJSONArray(response = response)) {
                 if (pageIndex == 1) {
-                    assignAccountDetails(getData()?.value?.get(0), 0)
+                    assignAccountDetails(account = getData()?.value?.get(0), position = 0)
                     dataExists = true
                     viewDetailsContainerOnPortrait.value = false
                 }
                 pageIndex++
             }
-        } else
-            getPageFailure(response = response)
+        } else getPageFailure(response = response)
         paginationProgressSpinnerVisibility.value = false
+    }
+
+    private fun getDataFromJSONArray(response: JSONObject): Boolean {
+        var success = true
+        var previousID: Int = when (repository.getData()?.value?.isNotEmpty()) {
+            true -> repository.getData()?.value?.last()?.id ?: 0
+            else -> 0
+        }
+        val jsonArray: JSONArray = response.getJSONArray(RESULT_KEY)
+        for (i: Int in 0 until jsonArray.length()) {
+            val jsonObject: JSONObject = jsonArray.getJSONObject(i)
+            if (jsonObject.getString(ID_KEY).toInt() > previousID) repository.apply {
+                val account: AccountEntity = getAccountEntityFromJSON(jsonObject)
+                insertAccountIntoDatabase(account)
+                previousID = getData()?.value?.last()?.id ?: 0
+            } else {
+                success = false
+                break
+            }
+        }
+        return success
     }
 
     private fun getPageFailure(response: JSONObject) {
@@ -91,22 +110,22 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         ).show()
     }
 
-    override fun getPageError(throwable: Throwable) {
+    override fun getAccountsPageError(throwable: Throwable) {
         paginationProgressSpinnerVisibility.value = false
         Toast.makeText(getApplication(), R.string.network_error, Toast.LENGTH_SHORT).show()
     }
 
     fun putAccountDetailChanges() {
-        setGenderAndStatus(account = accountCurrentDetails.value)
-        val putRequestPayload: JSONObject = findChanges(
-            newAccount = accountCurrentDetails.value,
+        val putRequestPayload: HashMap<String, String?> = findChanges(
+            currentAccount = setGenderAndStatus(account = accountCurrentDetails.value),
             originalAccount = accountOriginalDetails
         )
-        if (putRequestPayload.length() > 0) {
+
+        if (putRequestPayload.size > 0) {
             putRequestProgressSpinnerVisibility.value = true
             accountCurrentDetails.value?.id?.let {
                 repository.putChangesRequest(
-                    payload = putRequestPayload,
+                    payload = JSONObject(putRequestPayload as Map<*, *>),
                     id = it,
                     callBack = this as ViewModelCallBack
                 )
@@ -114,7 +133,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
-    override fun onPutResponse(response: JSONObject) {
+    override fun putAccountChangesResponse(response: JSONObject) {
         if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) {
             getAccountEntityFromJSON(response.getJSONObject(RESULT_KEY)).let {
                 repository.insertAccountIntoDatabase(it)
@@ -138,7 +157,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             ).show()
     }
 
-    override fun onPutError(throwable: Throwable) {
+    override fun putAccountChangesError(throwable: Throwable) {
         putRequestProgressSpinnerVisibility.value = false
         Toast.makeText(getApplication(), R.string.network_error, Toast.LENGTH_SHORT).show()
     }
@@ -153,38 +172,14 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         enableAccountDetailEdit.value = false
     }
 
-    fun reassignAccountDetails() {
+    fun reassignAccountDetails(): Unit =
         assignAccountDetails(accountOriginalDetails, recyclerViewPosition)
-    }
 
     fun getRecyclerViewPosition(): Int = recyclerViewPosition
 
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
     fun retryNetworkRequest(): Unit = repository.retryNetworkCall()
-
-    private fun getDataFromJSONArray(response: JSONObject): Boolean {
-        var success = true
-        var previousID: Int = when (repository.getData()?.value?.isNotEmpty()) {
-            true -> repository.getData()?.value?.last()?.id ?: 0
-            else -> 0
-        }
-        val jsonArray: JSONArray = response.getJSONArray(RESULT_KEY)
-        for (i: Int in 0 until jsonArray.length()) {
-            val jsonObject: JSONObject = jsonArray.getJSONObject(i)
-            if (jsonObject.getString(ID_KEY).toInt() > previousID)
-                repository.apply {
-                    val account: AccountEntity = getAccountEntityFromJSON(jsonObject)
-                    insertAccountIntoDatabase(account)
-                    previousID = getData()?.value?.last()?.id ?: 0
-                }
-            else {
-                success = false
-                break
-            }
-        }
-        return success
-    }
 
     private fun getAccountEntityFromJSON(jsonObject: JSONObject): AccountEntity = jsonObject.let {
         AccountEntity(
@@ -202,45 +197,36 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    private fun setGenderAndStatus(account: AccountEntity?) {
-        account?.apply {
-            gender = when (maleRadioButtonValue.value) {
-                true -> MALE
-                else -> FEMALE
-            }
-            status = when (statusSwitchValue.value) {
-                true -> ACTIVE
-                else -> INACTIVE
-            }
-        }
+    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
+        if (maleRadioButtonValue.value == true) gender = MALE
+        if (femaleRadioButtonValue.value == true) gender = FEMALE
+        status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
     }
 
-    private fun findChanges(newAccount: AccountEntity?, originalAccount: AccountEntity?):
-            JSONObject {
-        val accountDifferences: java.util.HashMap<String, String?> = HashMap()
-        newAccount?.apply {
+    private fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
+            HashMap<String, String?> = HashMap<String, String?>().also { map ->
+        currentAccount?.run {
             originalAccount?.let {
                 if (it.firstName?.trim() != firstName?.trim())
-                    accountDifferences[FIRST_NAME_KEY] = firstName?.trim()
+                    map[FIRST_NAME_KEY] = firstName?.trim()
                 if (it.lastName?.trim() != lastName?.trim())
-                    accountDifferences[LAST_NAME_KEY] = lastName?.trim()
+                    map[LAST_NAME_KEY] = lastName?.trim()
                 if (it.gender?.trim() != gender)
-                    accountDifferences[GENDER_KEY] = gender?.trim()
+                    map[GENDER_KEY] = gender?.trim()
                 if (it.dob?.trim() != dob?.trim())
-                    accountDifferences[DOB_KEY] = dob?.trim()
+                    map[DOB_KEY] = dob?.trim()
                 if (it.email?.trim() != email?.trim())
-                    accountDifferences[EMAIL_KEY] = email?.trim()
+                    map[EMAIL_KEY] = email?.trim()
                 if (it.phone?.trim() != phone?.trim())
-                    accountDifferences[PHONE_KEY] = phone?.trim()
+                    map[PHONE_KEY] = phone?.trim()
                 if (it.website?.trim() != website?.trim())
-                    accountDifferences[WEBSITE_KEY] = website?.trim()
+                    map[WEBSITE_KEY] = website?.trim()
                 if (it.address?.trim() != address?.trim())
-                    accountDifferences[ADDRESS_KEY] = address?.trim()
+                    map[ADDRESS_KEY] = address?.trim()
                 if (it.status?.trim() != status?.trim())
-                    accountDifferences[STATUS_KEY] = status?.trim()
+                    map[STATUS_KEY] = status?.trim()
             }
         }
-        return JSONObject(accountDifferences as Map<*, *>)
     }
 
 }

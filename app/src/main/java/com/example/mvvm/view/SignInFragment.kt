@@ -1,4 +1,4 @@
-package com.example.mvvm
+package com.example.mvvm.view
 
 import android.content.Context
 import android.content.Intent
@@ -12,7 +12,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.example.mvvm.view.APICallActivity
+import com.example.mvvm.R
 import java.util.regex.Pattern
 
 class SignInFragment : Fragment() {
@@ -29,17 +29,14 @@ class SignInFragment : Fragment() {
     private val emailValidationPattern = Pattern.compile(EMAIL_REGEX)
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.sign_in_fragment, container, false)
         val context = this.activity
         (activity as AppCompatActivity).supportActionBar!!.setDisplayHomeAsUpEnabled(false)
         context!!.title = getString(R.string.sign_in)
-        (activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager).toggleSoftInput(
-            InputMethodManager.HIDE_NOT_ALWAYS,
-            0
-        )
+        (activity?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+            .toggleSoftInput(InputMethodManager.HIDE_NOT_ALWAYS, 0)
         val emailField: EditText = view.findViewById(R.id.sign_in_email)
         //val passwordField:EditText = view.findViewById(R.id.sign_in_password)
         //val rememberCheck:CheckBox = view.findViewById(R.id.sign_in_remember)
@@ -108,15 +105,11 @@ class SignInFragment : Fragment() {
 //                addToBackStack(null)
 //                commit()
 //            }
-            startActivity(Intent(context, TemporaryActivity::class.java))
         }
         return view
     }
-//    private fun validateEmail(email: String?): Boolean {
-//        return when {
-//            email != "" && emailValidationPattern.matcher(email!!).matches() -> true
-//            else -> false
-//        }
-//    }
+
+    private fun validateEmail(email: String?): Boolean =
+        email != "" && emailValidationPattern.matcher(email!!).matches()
 
 }

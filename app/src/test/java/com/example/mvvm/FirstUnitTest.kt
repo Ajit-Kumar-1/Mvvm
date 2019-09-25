@@ -70,7 +70,7 @@ class FirstUnitTest {
         // Check state of value bound to layout
         viewModel.apply {
             paginationProgressSpinnerVisibility.value = true
-            getPageError(Throwable())
+            getAccountsPageError(Throwable())
             assert(!paginationProgressSpinnerVisibility.value!!)
         }
     }
@@ -80,7 +80,7 @@ class FirstUnitTest {
         // Check state of value bound to layout
         viewModel.apply {
             putRequestProgressSpinnerVisibility.value = true
-            onPutError(Throwable())
+            putAccountChangesError(Throwable())
             assert(!putRequestProgressSpinnerVisibility.value!!)
         }
     }
@@ -199,7 +199,7 @@ class FirstUnitTest {
     }
 
     private fun loadInitialPage() {
-        viewModel.getPageResponse(
+        viewModel.getAccountsPageResponse(
             JSONObject(
                 InputStreamReader(
                     activity.resources.openRawResource(R.raw.sample_page_response), "UTF-8"
@@ -210,7 +210,7 @@ class FirstUnitTest {
     }
 
     private fun loadPutResponse() {
-        viewModel.onPutResponse(
+        viewModel.putAccountChangesResponse(
             JSONObject(
                 InputStreamReader(
                     activity.resources.openRawResource(R.raw.sample_single_account_response),

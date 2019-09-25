@@ -18,8 +18,7 @@ abstract class AccountDatabase : RoomDatabase() {
                     instance = Room.databaseBuilder(
                         context.applicationContext,
                         AccountDatabase::class.java, "data-list.db"
-                    )
-                        .fallbackToDestructiveMigration().build()
+                    ).fallbackToDestructiveMigration().build()
                 }
             return instance
         }

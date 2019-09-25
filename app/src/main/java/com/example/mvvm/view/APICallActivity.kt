@@ -49,6 +49,12 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         setObservers(this, model)
     }
 
+    private fun setViewReferences() {
+        recyclerView = binding.recyclerView
+        fullDetailsContainer = binding.fragmentContainer
+        snackBar = Snackbar.make(recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE)
+    }
+
     private fun setLayoutTitleAndVisibility(model: AccountViewModel) {
         if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
                     && model.viewDetailsContainerOnPortrait.value!!) ||
@@ -62,30 +68,24 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
                 return
         }
-
         if (!model.dataExists)
             fullDetailsContainer.visibility = View.GONE
     }
 
-    private fun setViewReferences() {
-        recyclerView = binding.recyclerView
-        fullDetailsContainer = binding.fragmentContainer
-        snackBar = Snackbar.make(recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE)
-    }
-
     private fun setButtonListeners(model: AccountViewModel) {
-        binding.cancelButton.setOnClickListener {
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                title = getString(R.string.accounts)
-                model.viewDetailsContainerOnPortrait.value = false
+        model.apply {
+            binding.cancelButton.setOnClickListener {
+                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                    title = getString(R.string.accounts)
+                    viewDetailsContainerOnPortrait.value = false
+                }
+                reassignAccountDetails()
             }
-            model.reassignAccountDetails()
-        }
-        binding.editButton.setOnClickListener {
-            title = getString(R.string.account_details)
-            model.viewDetailsContainerOnPortrait.value = true
-            if (!binding.editButton.isChecked)
-                model.putAccountDetailChanges()
+            binding.editButton.setOnClickListener {
+                title = getString(R.string.account_details)
+                viewDetailsContainerOnPortrait.value = true
+                if (!binding.editButton.isChecked) putAccountDetailChanges()
+            }
         }
     }
 
@@ -110,22 +110,18 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     private fun setObservers(activity: AppCompatActivity, model: AccountViewModel) {
         model.apply {
             viewDetailsContainerOnPortrait.observe(activity, Observer<Boolean> { value ->
-                if (dataExists)
-                    if (value) fullDetailsContainer.visibility = View.VISIBLE
-                    else {
-                        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
-                            fullDetailsContainer.visibility = View.VISIBLE
-                        else
-                            fullDetailsContainer.visibility = View.GONE
-                    }
+                fullDetailsContainer.visibility = if (dataExists &&
+                    (value || resources.configuration.orientation ==
+                            Configuration.ORIENTATION_LANDSCAPE)
+                ) View.VISIBLE
+                else View.GONE
             })
             statusSwitchValue.observe(activity, Observer<Boolean> { value ->
-                binding.statusEdit.text = if (value) getString(R.string.active)
-                else getString(R.string.inactive)
+                binding.statusEdit.text =
+                    if (value) getString(R.string.active) else getString(R.string.inactive)
             })
             retryNetworkRequest.observe(activity, Observer<Boolean> { value ->
-                if (value) snackBar.show()
-                else snackBar.dismiss()
+                snackBar.let { if (value) it.show() else it.dismiss() }
             })
             getData()?.observe(activity, Observer<MutableList<AccountEntity>> { value ->
                 (recyclerView.adapter as AccountDetailsAdapter).setData(value)
@@ -137,12 +133,9 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     override fun onNetworkConnectionChanged(isConnected: Boolean) {
         model.apply {
             if (isConnected) {
-                if (retryNetworkRequest.value!!)
-                    retryNetworkRequest()
+                if (retryNetworkRequest.value!!) retryNetworkRequest()
                 retryNetworkRequest.value = false
-            } else {
-                retryNetworkRequest.value = true
-            }
+            } else retryNetworkRequest.value = true
         }
     }
 
@@ -157,8 +150,8 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     }
 
     override fun onBackPressed() {
-        if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT &&
-            fullDetailsContainer.visibility == View.VISIBLE
+        if (fullDetailsContainer.visibility == View.VISIBLE &&
+            resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         ) {
             title = getString(R.string.accounts)
             model.viewDetailsContainerOnPortrait.value = false

@@ -29,18 +29,17 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         this.recyclerView = recyclerView
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder =
         (parent.context).let {
             context = it as AppCompatActivity
             model = ViewModelProviders.of(it).get(AccountViewModel::class.java)
-            return MyViewHolder(
+            MyViewHolder(
                 EntryBinding.inflate(
                     LayoutInflater.from(it), parent,
                     false
                 )
             )
         }
-    }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         bindData(binding = holder.binding, position = position)
@@ -79,15 +78,11 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         }
     }
 
-    private fun highlightColor(position: Int): Int {
-        return if ((context as AppCompatActivity).resources.configuration.orientation
-            == Configuration.ORIENTATION_LANDSCAPE
-            && model.getRecyclerViewPosition() == position
-        )
-            R.color.yellowHighlight
-        else
-            Color.TRANSPARENT
-    }
+    private fun highlightColor(position: Int): Int =
+        if ((context as AppCompatActivity).resources.configuration.orientation
+            == Configuration.ORIENTATION_LANDSCAPE && model.getRecyclerViewPosition() == position
+        ) R.color.yellowHighlight
+        else Color.TRANSPARENT
 
     fun setData(data: MutableList<AccountEntity>) {
         this.accountData = data

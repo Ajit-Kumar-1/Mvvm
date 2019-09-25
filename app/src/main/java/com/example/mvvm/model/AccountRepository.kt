@@ -41,11 +41,11 @@ class AccountRepository(application: Application) {
         retryRequest = GET_PAGE
         service?.getAccountsPage(pageIndex = pageIndex)?.enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: retrofit2.Response<String>) {
-                response.body()?.let { callBack?.getPageResponse(JSONObject(it)) }
+                response.body()?.let { callBack?.getAccountsPageResponse(JSONObject(it)) }
             }
 
             override fun onFailure(call: Call<String>, t: Throwable) {
-                callBack?.getPageError(throwable = t)
+                callBack?.getAccountsPageError(throwable = t)
             }
         })
     }
@@ -57,11 +57,11 @@ class AccountRepository(application: Application) {
         retryRequest = PUT_CHANGES
         service?.putAccountDetails(id, payload.toString())?.enqueue(object : Callback<String> {
             override fun onResponse(call: Call<String>, response: retrofit2.Response<String>) {
-                response.body()?.let { callBack?.onPutResponse(JSONObject(it)) }
+                response.body()?.let { callBack?.putAccountChangesResponse(JSONObject(it)) }
             }
 
             override fun onFailure(call: Call<String>, t: Throwable) {
-                callBack?.onPutError(throwable = t)
+                callBack?.putAccountChangesError(throwable = t)
             }
         })
     }
