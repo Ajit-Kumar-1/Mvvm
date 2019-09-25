@@ -98,34 +98,30 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     super.onScrollStateChanged(it, newState)
                     if (!it.canScrollVertically(1)) {
                         model.getPage()
-                        model.getData()?.value?.size?.minus(1)
-                            ?.let { it1 -> it.scrollToPosition(it1) }
+                        scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
                     }
                 }
             })
-            scrollToPosition(model.getRecyclerViewPosition())
         }
     }
 
     private fun setObservers(activity: AppCompatActivity, model: AccountViewModel) {
         model.apply {
-            viewDetailsContainerOnPortrait.observe(activity, Observer<Boolean> { value ->
+            viewDetailsContainerOnPortrait.observe(activity, Observer<Boolean> {
                 fullDetailsContainer.visibility = if (dataExists &&
-                    (value || resources.configuration.orientation ==
+                    (it || resources.configuration.orientation ==
                             Configuration.ORIENTATION_LANDSCAPE)
                 ) View.VISIBLE
                 else View.GONE
             })
-            statusSwitchValue.observe(activity, Observer<Boolean> { value ->
-                binding.statusEdit.text =
-                    if (value) getString(R.string.active) else getString(R.string.inactive)
+            statusSwitchValue.observe(activity, Observer<Boolean> {
+                binding.statusEdit.text = getString(if (it) R.string.active else R.string.inactive)
             })
-            retryNetworkRequest.observe(activity, Observer<Boolean> { value ->
-                snackBar.let { if (value) it.show() else it.dismiss() }
+            retryNetworkRequest.observe(activity, Observer<Boolean> {
+                snackBar.apply { if (it) show() else dismiss() }
             })
-            getData()?.observe(activity, Observer<MutableList<AccountEntity>> { value ->
-                (recyclerView.adapter as AccountDetailsAdapter).setData(value)
-                if (value.size == 1) assignAccountDetails(value[0], 0)
+            getData()?.observe(activity, Observer<MutableList<AccountEntity>> {
+                (recyclerView.adapter as AccountDetailsAdapter).setData(it)
             })
         }
     }
@@ -157,8 +153,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             model.viewDetailsContainerOnPortrait.value = false
             model.reassignAccountDetails()
             fullDetailsContainer.visibility = View.GONE
-        } else
-            super.onBackPressed()
+        } else super.onBackPressed()
         overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
     }
 

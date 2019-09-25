@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         runBlocking {
-            suspend { AccountDatabase.getInstance(this@MainActivity)?.clearAllTables() }
+            AccountDatabase.getInstance(this@MainActivity)?.accountDAO()?.deleteAll()
         }
 
         if (supportFragmentManager.fragments.size == 0) supportFragmentManager.beginTransaction()

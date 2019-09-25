@@ -43,6 +43,10 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         bindData(binding = holder.binding, position = position)
+        if (position == 0 && model.getRecyclerViewPosition() == 0 &&
+            model.enableAccountDetailEdit.value == false
+        )
+            model.loadInitialAccount(accountData?.get(0))
         holder.itemView.apply {
             setBackgroundColor(highlightColor(position = position))
             setOnClickListener { _ ->

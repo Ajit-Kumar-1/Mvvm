@@ -187,7 +187,7 @@ class FirstUnitTest {
     private fun accountDetailChanges(iteration: Int) {
         // Check differences in entity properties
         TestSamples.accountChangesSamples[iteration].apply {
-            assertEquals(second, TestMethods.putChanges(first))
+            assertEquals(second, TestMethods.findChanges(first.first,first.second))
         }
     }
 

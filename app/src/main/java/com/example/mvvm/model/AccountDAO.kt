@@ -12,4 +12,7 @@ interface AccountDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg data: AccountEntity)
 
+    @Query("DELETE FROM data")
+    suspend fun deleteAll()
+
 }

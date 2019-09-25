@@ -6,62 +6,61 @@ import java.util.*
 
 object TestMethods {
 
-    private const val ADDRESS: String = "address"
-    private const val AVATAR: String = "avatar"
-    private const val DOB: String = "dob"
-    private const val EMAIL: String = "email"
-    private const val FIRST_NAME: String = "first_name"
-    private const val GENDER: String = "gender"
-    private const val HREF: String = "href"
-    private const val ID: String = "id"
-    private const val LAST_NAME: String = "last_name"
-    private const val LINKS: String = "links"
-    private const val PHONE: String = "phone"
-    private const val STATUS: String = "status"
-    private const val WEBSITE: String = "website"
+    private const val ADDRESS_KEY: String = "address"
+    private const val AVATAR_KEY: String = "avatar"
+    private const val DOB_KEY: String = "dob"
+    private const val EMAIL_KEY: String = "email"
+    private const val FIRST_NAME_KEY: String = "first_name"
+    private const val GENDER_KEY: String = "gender"
+    private const val HREF_KEY: String = "href"
+    private const val ID_KEY: String = "id"
+    private const val LAST_NAME_KEY: String = "last_name"
+    private const val LINKS_KEY: String = "links"
+    private const val PHONE_KEY: String = "phone"
+    private const val STATUS_KEY: String = "status"
+    private const val WEBSITE_KEY: String = "website"
 
 
     fun getEntityFromJSON(jsonObject: JSONObject): AccountEntity = jsonObject.let {
         AccountEntity(
-            it.getString(ID).toInt(),
-            it.getString(FIRST_NAME).trim(),
-            it.getString(LAST_NAME).trim(),
-            it.getString(GENDER).trim(),
-            it.getString(DOB).trim(),
-            it.getString(EMAIL).toLowerCase(Locale.ROOT),
-            it.getString(PHONE).trim(),
-            it.getString(WEBSITE).trim(),
-            it.getString(ADDRESS).trim(),
-            it.getString(STATUS).trim(),
-            it.getJSONObject(LINKS).getJSONObject(AVATAR).getString(HREF)
+            it.getString(ID_KEY).toInt(),
+            it.getString(FIRST_NAME_KEY).trim(),
+            it.getString(LAST_NAME_KEY).trim(),
+            it.getString(GENDER_KEY).trim(),
+            it.getString(DOB_KEY).trim(),
+            it.getString(EMAIL_KEY).toLowerCase(Locale.ROOT),
+            it.getString(PHONE_KEY).trim(),
+            it.getString(WEBSITE_KEY).trim(),
+            it.getString(ADDRESS_KEY).trim(),
+            it.getString(STATUS_KEY).trim(),
+            it.getJSONObject(LINKS_KEY).getJSONObject(AVATAR_KEY).getString(HREF_KEY)
         )
     }
 
-    fun putChanges(data: Pair<AccountEntity?, AccountEntity?>): HashMap<String, String?> {
-        val putMap = HashMap<String, String?>()
-        data.first?.apply {
-            data.second?.let {
+    fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
+            HashMap<String, String?> = HashMap<String, String?>().also { map ->
+        currentAccount?.run {
+            originalAccount?.let {
                 if (it.firstName?.trim() != firstName?.trim())
-                    putMap[FIRST_NAME] = firstName?.trim()
+                    map[FIRST_NAME_KEY] = firstName?.trim()
                 if (it.lastName?.trim() != lastName?.trim())
-                    putMap[LAST_NAME] = lastName?.trim()
+                    map[LAST_NAME_KEY] = lastName?.trim()
                 if (it.gender?.trim() != gender)
-                    putMap[GENDER] = gender?.trim()
+                    map[GENDER_KEY] = gender?.trim()
                 if (it.dob?.trim() != dob?.trim())
-                    putMap[DOB] = dob?.trim()
+                    map[DOB_KEY] = dob?.trim()
                 if (it.email?.trim() != email?.trim())
-                    putMap[EMAIL] = email?.trim()
+                    map[EMAIL_KEY] = email?.trim()
                 if (it.phone?.trim() != phone?.trim())
-                    putMap[PHONE] = phone?.trim()
+                    map[PHONE_KEY] = phone?.trim()
                 if (it.website?.trim() != website?.trim())
-                    putMap[WEBSITE] = website?.trim()
+                    map[WEBSITE_KEY] = website?.trim()
                 if (it.address?.trim() != address?.trim())
-                    putMap[ADDRESS] = address?.trim()
+                    map[ADDRESS_KEY] = address?.trim()
                 if (it.status?.trim() != status?.trim())
-                    putMap[STATUS] = status?.trim()
+                    map[STATUS_KEY] = status?.trim()
             }
         }
-        return putMap
     }
 
 }

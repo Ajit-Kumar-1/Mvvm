@@ -67,16 +67,8 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     }
 
     override fun getAccountsPageResponse(response: JSONObject) {
-        if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) {
-            if (getDataFromJSONArray(response = response)) {
-                if (pageIndex == 1) {
-                    assignAccountDetails(account = getData()?.value?.get(0), position = 0)
-                    dataExists = true
-                    viewDetailsContainerOnPortrait.value = false
-                }
-                pageIndex++
-            }
-        } else getPageFailure(response = response)
+        if (!response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) getPageFailure(response)
+        else if (getDataFromJSONArray(response = response)) pageIndex++
         paginationProgressSpinnerVisibility.value = false
     }
 
@@ -92,7 +84,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             if (jsonObject.getString(ID_KEY).toInt() > previousID) repository.apply {
                 val account: AccountEntity = getAccountEntityFromJSON(jsonObject)
                 insertAccountIntoDatabase(account)
-                previousID = getData()?.value?.last()?.id ?: 0
+                previousID = account.id
             } else {
                 success = false
                 break
@@ -189,8 +181,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             }
             Toast.makeText(getApplication(), R.string.information_updated, Toast.LENGTH_SHORT)
                 .show()
-        } else
-            onPutFailure(response = response)
+        } else onPutFailure(response = response)
         putRequestProgressSpinnerVisibility.value = false
     }
 
@@ -228,5 +219,11 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
     fun retryNetworkRequest(): Unit = repository.retryNetworkCall()
+
+    fun loadInitialAccount(account: AccountEntity?) {
+        assignAccountDetails(account, 0)
+        dataExists = true
+        viewDetailsContainerOnPortrait.value = false
+    }
 
 }
