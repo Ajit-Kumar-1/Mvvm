@@ -58,7 +58,6 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
 
-
     init {
         getAccountsPage()
     }
@@ -119,7 +118,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     override fun getAccountsPageError(throwable: Throwable) {
         paginationProgressSpinnerVisibility.value = false
-        Toast.makeText(getApplication(), R.string.network_error, Toast.LENGTH_SHORT).show()
+        Toast.makeText(getApplication(), throwable.message, Toast.LENGTH_SHORT).show()
     }
 
     fun putAccountDetailChanges(): Unit = findChanges(
@@ -127,11 +126,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         originalAccount = accountOriginalDetails
     ).let {
         if (it.size > 0) accountCurrentDetails.value?.id?.let { id ->
-            repository.putChangesRequest(
-                payload = JSONObject(it as Map<*, *>),
-                id = id,
-                callBack = this as ViewModelCallBack
-            )
+            repository.putChangesRequest(JSONObject(it as Map<*, *>), id, this as ViewModelCallBack)
             putRequestProgressSpinnerVisibility.value = true
         }
     }
@@ -146,8 +141,8 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             HashMap<String, String?> = HashMap<String, String?>().also { map ->
         currentAccount?.run {
             originalAccount?.let {
-                if (it.firstName?.trim() != firstName?.trim())
-                    map[FIRST_NAME_KEY] = firstName?.trim()
+                if (it.firstName?.trim() != firstName?.trim()) map[FIRST_NAME_KEY] =
+                    firstName
                 if (it.lastName?.trim() != lastName?.trim()) map[LAST_NAME_KEY] = lastName?.trim()
                 if (it.gender?.trim() != gender) map[GENDER_KEY] = gender?.trim()
                 if (it.dob?.trim() != dob?.trim()) map[DOB_KEY] = dob?.trim()
@@ -181,7 +176,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     override fun putAccountChangesError(throwable: Throwable) {
         putRequestProgressSpinnerVisibility.value = false
-        Toast.makeText(getApplication(), R.string.network_error, Toast.LENGTH_SHORT).show()
+        Toast.makeText(getApplication(), throwable.message, Toast.LENGTH_SHORT).show()
     }
 
     fun assignAccountDetails(account: AccountEntity?, position: Int) {
@@ -206,7 +201,6 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun loadInitialAccount(account: AccountEntity?) {
         assignAccountDetails(account, 0)
         dataExists = true
-        viewDetailsContainerOnPortrait.value = false
     }
 
 }

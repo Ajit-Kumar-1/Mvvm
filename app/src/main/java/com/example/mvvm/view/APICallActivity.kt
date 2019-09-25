@@ -6,6 +6,7 @@ import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ToggleButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -43,91 +44,78 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         binding.account = model
 
         setViewReferences()
-        setLayoutTitleAndVisibility(model)
-        setButtonListeners(model)
-        setUpRecyclerView(recyclerView, model)
-        setObservers(this, model)
+        setLayoutTitleAndVisibility()
+        setButtonListeners()
+        setUpRecyclerView()
+        setObservers()
     }
 
-    private fun setViewReferences() {
-        recyclerView = binding.recyclerView
-        fullDetailsContainer = binding.fragmentContainer
+    private fun setViewReferences(): Unit = binding.let {
+        recyclerView = it.recyclerView
+        fullDetailsContainer = it.fragmentContainer
         snackBar = Snackbar.make(recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE)
     }
 
-    private fun setLayoutTitleAndVisibility(model: AccountViewModel) {
-        if (model.dataExists) {
-            if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                        && model.viewDetailsContainerOnPortrait.value!!) ||
-                (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                        && model.enableAccountDetailEdit.value!!)
-            ) {
-                title = getString(R.string.account_details)
-                fullDetailsContainer.visibility = View.VISIBLE
-            } else {
-                title = getString(R.string.accounts)
-                if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT)
-                    return
-            }
-        } else fullDetailsContainer.visibility = View.GONE
+    private fun setLayoutTitleAndVisibility(): Unit = if (model.dataExists) {
+        if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+                    && model.viewDetailsContainerOnPortrait.value!!) ||
+            (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+                    && model.enableAccountDetailEdit.value!!)
+        ) {
+            title = getString(R.string.account_details)
+            fullDetailsContainer.visibility = View.VISIBLE
+        } else title = getString(R.string.accounts)
+    } else fullDetailsContainer.visibility = View.GONE
 
+    private fun setButtonListeners(): Unit = model.run {
+        binding.cancelButton.setOnClickListener {
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                title = getString(R.string.accounts)
+                viewDetailsContainerOnPortrait.value = false
+            }
+            reassignAccountDetails()
+        }
+        binding.editButton.setOnClickListener {
+            title = getString(R.string.account_details)
+            viewDetailsContainerOnPortrait.value = true
+            if (!(it as ToggleButton).isChecked) putAccountDetailChanges()
+        }
     }
 
-    private fun setButtonListeners(model: AccountViewModel): Unit =
-        model.run {
-            binding.cancelButton.setOnClickListener {
-                if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                    title = getString(R.string.accounts)
-                    viewDetailsContainerOnPortrait.value = false
+    private fun setUpRecyclerView(): Unit = recyclerView.run {
+        layoutManager = LinearLayoutManager(context)
+        adapter = AccountDetailsAdapter(model.getData()?.value)
+        addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(it, newState)
+                if (!it.canScrollVertically(1)) {
+                    model.getAccountsPage()
+                    scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
                 }
-                reassignAccountDetails()
             }
-            binding.editButton.setOnClickListener {
-                title = getString(R.string.account_details)
-                viewDetailsContainerOnPortrait.value = true
-                if (!binding.editButton.isChecked) putAccountDetailChanges()
-            }
-        }
+        })
+    }
 
-    private fun setUpRecyclerView(recyclerView: RecyclerView, model: AccountViewModel): Unit =
-        recyclerView.run {
-            layoutManager = LinearLayoutManager(context)
-            adapter = AccountDetailsAdapter(model.getData()?.value)
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
-                    super.onScrollStateChanged(it, newState)
-                    if (!it.canScrollVertically(1)) {
-                        model.getAccountsPage()
-                        scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
-                    }
-                }
-            })
-        }
+    private fun setObservers(): Unit = model.run {
+        getData()?.observe(this@APICallActivity, Observer<MutableList<AccountEntity>> {
+            (recyclerView.adapter as AccountDetailsAdapter).setData(it)
+        })
+        viewDetailsContainerOnPortrait.observe(this@APICallActivity, Observer<Boolean> {
+            fullDetailsContainer.visibility = if (dataExists &&
+                (it || resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
+            ) View.VISIBLE else View.GONE
+        })
+        retryNetworkRequest.observe(this@APICallActivity, Observer<Boolean> {
+            snackBar.apply { if (it) show() else dismiss() }
+        })
+    }
 
-    private fun setObservers(activity: AppCompatActivity, model: AccountViewModel): Unit =
-        model.run {
-            getData()?.observe(activity, Observer<MutableList<AccountEntity>> {
-                (recyclerView.adapter as AccountDetailsAdapter).setData(it)
-            })
-            viewDetailsContainerOnPortrait.observe(activity, Observer<Boolean> {
-                fullDetailsContainer.visibility = if (dataExists &&
-                    (it || resources.configuration.orientation ==
-                            Configuration.ORIENTATION_LANDSCAPE)
-                ) View.VISIBLE
-                else View.GONE
-            })
-            retryNetworkRequest.observe(activity, Observer<Boolean> {
-                snackBar.apply { if (it) show() else dismiss() }
-            })
-        }
-
-    override fun onNetworkConnectionChanged(isConnected: Boolean): Unit =
-        model.run {
-            if (isConnected) {
-                if (retryNetworkRequest.value!!) retryNetworkRequest()
-                retryNetworkRequest.value = false
-            } else retryNetworkRequest.value = true
-        }
+    override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = model.run {
+        if (isConnected) {
+            if (retryNetworkRequest.value!!) retryNetworkRequest()
+            retryNetworkRequest.value = false
+        } else retryNetworkRequest.value = true
+    }
 
     override fun onResume() {
         super.onResume()
