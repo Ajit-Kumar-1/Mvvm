@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.ToggleButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -25,9 +24,7 @@ import com.google.android.material.snackbar.Snackbar
 class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener {
 
     private lateinit var model: AccountViewModel
-    private lateinit var fullDetailsContainer: FrameLayout
     private lateinit var binding: ActivityCallApiBinding
-    private lateinit var recyclerView: RecyclerView
     private lateinit var snackBar: Snackbar
     private val connectivityReceiver = ConnectivityReceiver()
 
@@ -42,18 +39,14 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         model = ViewModelProviders.of(this).get(AccountViewModel::class.java)
         binding.lifecycleOwner = this
         binding.account = model
+        snackBar = Snackbar.make(
+            binding.recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE
+        )
 
-        setViewReferences()
         setLayoutTitleAndVisibility()
         setButtonListeners()
         setUpRecyclerView()
         setObservers()
-    }
-
-    private fun setViewReferences(): Unit = binding.let {
-        recyclerView = it.recyclerView
-        fullDetailsContainer = it.fragmentContainer
-        snackBar = Snackbar.make(recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE)
     }
 
     private fun setLayoutTitleAndVisibility(): Unit = if (model.dataExists) {
@@ -63,9 +56,9 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                     && model.enableAccountDetailEdit.value!!)
         ) {
             title = getString(R.string.account_details)
-            fullDetailsContainer.visibility = View.VISIBLE
+            binding.fragmentContainer.visibility = View.VISIBLE
         } else title = getString(R.string.accounts)
-    } else fullDetailsContainer.visibility = View.GONE
+    } else binding.fragmentContainer.visibility = View.GONE
 
     private fun setButtonListeners(): Unit = model.run {
         binding.cancelButton.setOnClickListener {
@@ -82,9 +75,9 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         }
     }
 
-    private fun setUpRecyclerView(): Unit = recyclerView.run {
+    private fun setUpRecyclerView(): Unit = binding.recyclerView.run {
         layoutManager = LinearLayoutManager(context)
-        adapter = AccountDetailsAdapter(model.getData()?.value)
+        adapter = model.adapter
         addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(it, newState)
@@ -98,10 +91,10 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
 
     private fun setObservers(): Unit = model.run {
         getData()?.observe(this@APICallActivity, Observer<MutableList<AccountEntity>> {
-            (recyclerView.adapter as AccountDetailsAdapter).setData(it)
+            (binding.recyclerView.adapter as AccountDetailsAdapter).setData(it)
         })
         viewDetailsContainerOnPortrait.observe(this@APICallActivity, Observer<Boolean> {
-            fullDetailsContainer.visibility = if (dataExists &&
+            binding.fragmentContainer.visibility = if (dataExists &&
                 (it || resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
             ) View.VISIBLE else View.GONE
         })
@@ -128,13 +121,13 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     }
 
     override fun onBackPressed(): Unit =
-        if (fullDetailsContainer.visibility == View.VISIBLE &&
+        if (binding.fragmentContainer.visibility == View.VISIBLE &&
             resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         ) {
             title = getString(R.string.accounts)
             model.viewDetailsContainerOnPortrait.value = false
             model.reassignAccountDetails()
-            fullDetailsContainer.visibility = View.GONE
+            binding.fragmentContainer.visibility = View.GONE
         } else {
             super.onBackPressed()
             overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)

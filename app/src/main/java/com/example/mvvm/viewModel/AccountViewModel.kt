@@ -57,6 +57,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     var dataExists = false
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
+    val adapter = AccountDetailsAdapter(getData()?.value)
 
     init {
         getAccountsPage()
