@@ -23,7 +23,6 @@ import com.google.android.material.snackbar.Snackbar
 @Suppress("DEPRECATION")
 class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener {
 
-    private lateinit var model: AccountViewModel
     private lateinit var binding: ActivityCallApiBinding
     private lateinit var snackBar: Snackbar
     private val connectivityReceiver = ConnectivityReceiver()
@@ -36,9 +35,8 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             connectivityReceiver,
             IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
         )
-        model = ViewModelProviders.of(this).get(AccountViewModel::class.java)
+        binding.account = ViewModelProviders.of(this).get(AccountViewModel::class.java)
         binding.lifecycleOwner = this
-        binding.account = model
         snackBar = Snackbar.make(
             binding.recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE
         )
@@ -49,18 +47,18 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         setObservers()
     }
 
-    private fun setLayoutTitleAndVisibility(): Unit = if (model.dataExists) {
+    private fun setLayoutTitleAndVisibility(): Unit = if (binding.account?.dataExists == true) {
         if ((resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-                    && model.viewDetailsContainerOnPortrait.value!!) ||
+                    && binding.account?.viewDetailsContainerOnPortrait?.value!!) ||
             (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-                    && model.enableAccountDetailEdit.value!!)
+                    && binding.account?.enableAccountDetailEdit?.value!!)
         ) {
             title = getString(R.string.account_details)
             binding.fragmentContainer.visibility = View.VISIBLE
         } else title = getString(R.string.accounts)
     } else binding.fragmentContainer.visibility = View.GONE
 
-    private fun setButtonListeners(): Unit = model.run {
+    private fun setButtonListeners(): Unit? = binding.account?.run {
         binding.cancelButton.setOnClickListener {
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 title = getString(R.string.accounts)
@@ -77,19 +75,19 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
 
     private fun setUpRecyclerView(): Unit = binding.recyclerView.run {
         layoutManager = LinearLayoutManager(context)
-        adapter = model.adapter
+        adapter = binding.account?.adapter
         addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(it, newState)
                 if (!it.canScrollVertically(1)) {
-                    model.getAccountsPage()
+                    binding.account?.getAccountsPage()
                     scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
                 }
             }
         })
     }
 
-    private fun setObservers(): Unit = model.run {
+    private fun setObservers(): Unit? = binding.account?.run {
         getData()?.observe(this@APICallActivity, Observer<MutableList<AccountEntity>> {
             (binding.recyclerView.adapter as AccountDetailsAdapter).setData(it)
         })
@@ -103,11 +101,13 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         })
     }
 
-    override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = model.run {
-        if (isConnected) {
-            if (retryNetworkRequest.value!!) retryNetworkRequest()
-            retryNetworkRequest.value = false
-        } else retryNetworkRequest.value = true
+    override fun onNetworkConnectionChanged(isConnected: Boolean) {
+        binding.account?.run {
+            if (isConnected) {
+                if (retryNetworkRequest.value!!) retryNetworkRequest()
+                retryNetworkRequest.value = false
+            } else retryNetworkRequest.value = true
+        }
     }
 
     override fun onResume() {
@@ -125,8 +125,8 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
         ) {
             title = getString(R.string.accounts)
-            model.viewDetailsContainerOnPortrait.value = false
-            model.reassignAccountDetails()
+            binding.account?.viewDetailsContainerOnPortrait?.value = false
+            binding.account?.reassignAccountDetails()
             binding.fragmentContainer.visibility = View.GONE
         } else {
             super.onBackPressed()
