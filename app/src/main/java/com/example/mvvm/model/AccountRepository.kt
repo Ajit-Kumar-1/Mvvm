@@ -12,7 +12,7 @@ import retrofit2.Callback
 class AccountRepository(application: Application) {
 
     companion object {
-        private const val GET_PAGE: String = "getPage"
+        private const val GET_PAGE: String = "getAccountsPage"
         private const val PUT_CHANGES: String = "putChanges"
     }
 

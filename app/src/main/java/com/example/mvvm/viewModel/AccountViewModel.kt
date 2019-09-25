@@ -52,16 +52,18 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     var maleRadioButtonValue: MutableLiveData<Boolean> = MutableLiveData(false)
     var femaleRadioButtonValue: MutableLiveData<Boolean> = MutableLiveData(false)
     var statusSwitchValue: MutableLiveData<Boolean> = MutableLiveData(false)
-
+    val activeValue: String = application.resources.getString(R.string.active)
+    val inactiveValue: String = application.resources.getString(R.string.inactive)
     var dataExists = false
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
 
+
     init {
-        getPage()
+        getAccountsPage()
     }
 
-    fun getPage() {
+    fun getAccountsPage() {
         paginationProgressSpinnerVisibility.value = true
         repository.getPageRequest(pageIndex = pageIndex, callBack = this as ViewModelCallBack)
     }
@@ -74,10 +76,9 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     private fun getDataFromJSONArray(response: JSONObject): Boolean {
         var success = true
-        var previousID: Int = when (repository.getData()?.value?.isNotEmpty()) {
-            true -> repository.getData()?.value?.last()?.id ?: 0
-            else -> 0
-        }
+        var previousID: Int = if (repository.getData()?.value?.isNotEmpty() == true)
+            repository.getData()?.value?.last()?.id ?: 0
+        else 0
         val jsonArray: JSONArray = response.getJSONArray(RESULT_KEY)
         for (i: Int in 0 until jsonArray.length()) {
             val jsonObject: JSONObject = jsonArray.getJSONObject(i)
@@ -109,11 +110,9 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         )
     }
 
-    private fun getPageFailure(response: JSONObject) {
-        val responseMetadata: JSONObject = response.getJSONObject(META_KEY)
+    private fun getPageFailure(response: JSONObject): Unit = response.getJSONObject(META_KEY).let {
         Toast.makeText(
-            getApplication(),
-            "${responseMetadata.get(CODE_KEY)}:" + " ${responseMetadata.get(MESSAGE_KEY)}",
+            getApplication(), "${it.get(CODE_KEY)}:" + " ${it.get(MESSAGE_KEY)}",
             Toast.LENGTH_SHORT
         ).show()
     }
@@ -123,28 +122,24 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         Toast.makeText(getApplication(), R.string.network_error, Toast.LENGTH_SHORT).show()
     }
 
-    fun putAccountDetailChanges() {
-        val putRequestPayload: HashMap<String, String?> = findChanges(
-            currentAccount = setGenderAndStatus(account = accountCurrentDetails.value),
-            originalAccount = accountOriginalDetails
-        )
-
-        if (putRequestPayload.size > 0) {
+    fun putAccountDetailChanges(): Unit = findChanges(
+        currentAccount = setGenderAndStatus(account = accountCurrentDetails.value),
+        originalAccount = accountOriginalDetails
+    ).let {
+        if (it.size > 0) accountCurrentDetails.value?.id?.let { id ->
+            repository.putChangesRequest(
+                payload = JSONObject(it as Map<*, *>),
+                id = id,
+                callBack = this as ViewModelCallBack
+            )
             putRequestProgressSpinnerVisibility.value = true
-            accountCurrentDetails.value?.id?.let {
-                repository.putChangesRequest(
-                    payload = JSONObject(putRequestPayload as Map<*, *>),
-                    id = it,
-                    callBack = this as ViewModelCallBack
-                )
-            }
         }
     }
 
-    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
-        if (maleRadioButtonValue.value == true) gender = MALE
-        if (femaleRadioButtonValue.value == true) gender = FEMALE
-        status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
+    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.also {
+        if (maleRadioButtonValue.value == true) it.gender = MALE
+        if (femaleRadioButtonValue.value == true) it.gender = FEMALE
+        it.status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
     }
 
     private fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
@@ -153,22 +148,14 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             originalAccount?.let {
                 if (it.firstName?.trim() != firstName?.trim())
                     map[FIRST_NAME_KEY] = firstName?.trim()
-                if (it.lastName?.trim() != lastName?.trim())
-                    map[LAST_NAME_KEY] = lastName?.trim()
-                if (it.gender?.trim() != gender)
-                    map[GENDER_KEY] = gender?.trim()
-                if (it.dob?.trim() != dob?.trim())
-                    map[DOB_KEY] = dob?.trim()
-                if (it.email?.trim() != email?.trim())
-                    map[EMAIL_KEY] = email?.trim()
-                if (it.phone?.trim() != phone?.trim())
-                    map[PHONE_KEY] = phone?.trim()
-                if (it.website?.trim() != website?.trim())
-                    map[WEBSITE_KEY] = website?.trim()
-                if (it.address?.trim() != address?.trim())
-                    map[ADDRESS_KEY] = address?.trim()
-                if (it.status?.trim() != status?.trim())
-                    map[STATUS_KEY] = status?.trim()
+                if (it.lastName?.trim() != lastName?.trim()) map[LAST_NAME_KEY] = lastName?.trim()
+                if (it.gender?.trim() != gender) map[GENDER_KEY] = gender?.trim()
+                if (it.dob?.trim() != dob?.trim()) map[DOB_KEY] = dob?.trim()
+                if (it.email?.trim() != email?.trim()) map[EMAIL_KEY] = email?.trim()
+                if (it.phone?.trim() != phone?.trim()) map[PHONE_KEY] = phone?.trim()
+                if (it.website?.trim() != website?.trim()) map[WEBSITE_KEY] = website?.trim()
+                if (it.address?.trim() != address?.trim()) map[ADDRESS_KEY] = address?.trim()
+                if (it.status?.trim() != status?.trim()) map[STATUS_KEY] = status?.trim()
             }
         }
     }
@@ -185,15 +172,11 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         putRequestProgressSpinnerVisibility.value = false
     }
 
-    private fun onPutFailure(response: JSONObject) {
-        val responseArray: JSONArray = response.getJSONArray(RESULT_KEY)
-        for (i in 0 until responseArray.length())
-            Toast.makeText(
-                getApplication(),
-                "${responseArray.getJSONObject(i).getString(FIELD_KEY)}:" +
-                        " ${responseArray.getJSONObject(i).getString(MESSAGE_KEY)}",
-                Toast.LENGTH_SHORT
-            ).show()
+    private fun onPutFailure(response: JSONObject): Unit = response.getJSONArray(RESULT_KEY).let {
+        for (i in 0 until it.length()) Toast.makeText(
+            getApplication(), "${it.getJSONObject(i).getString(FIELD_KEY)}:" +
+                    " ${it.getJSONObject(i).getString(MESSAGE_KEY)}", Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun putAccountChangesError(throwable: Throwable) {

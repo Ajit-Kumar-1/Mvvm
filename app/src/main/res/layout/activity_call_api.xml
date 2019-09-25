@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
         <variable
             name="account"
             type="com.example.mvvm.viewModel.AccountViewModel" />
+
     </data>
 
     <FrameLayout
@@ -306,8 +306,7 @@
                                 android:checked="@={account.statusSwitchValue}"
                                 android:enabled="@{account.enableAccountDetailEdit}"
                                 android:gravity="center_vertical"
-                                android:textOff="@string/inactive"
-                                android:textOn="@string/active"
+                                android:text="@{account.statusSwitchValue?account.activeValue:account.inactiveValue}"
                                 android:textSize="24sp" />
                         </LinearLayout>
                     </LinearLayout>

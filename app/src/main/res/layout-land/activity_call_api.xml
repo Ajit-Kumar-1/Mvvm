@@ -313,8 +313,7 @@
                                 android:layout_height="46dp"
                                 android:checked="@={account.statusSwitchValue}"
                                 android:enabled="@{account.enableAccountDetailEdit}"
-                                android:textOff="@string/inactive"
-                                android:textOn="@string/active"
+                                android:text="@{account.statusSwitchValue?account.activeValue:account.inactiveValue}"
                                 android:textSize="24sp" />
                         </LinearLayout>
                     </LinearLayout>

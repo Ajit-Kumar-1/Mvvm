@@ -68,8 +68,6 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
                 recyclerView.scrollToPosition(position)
             }
         }
-        if (position == itemCount - 1)
-            recyclerView.scrollToPosition(model.getSelectedItemPosition())
     }
 
     override fun getItemCount(): Int = accountData?.size ?: 0

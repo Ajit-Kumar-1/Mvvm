@@ -60,7 +60,7 @@ class FirstUnitTest {
         // Check state of value bound to layout
         viewModel.apply {
             paginationProgressSpinnerVisibility.value = false
-            getPage()
+            getAccountsPage()
             assert(paginationProgressSpinnerVisibility.value!!)
         }
     }

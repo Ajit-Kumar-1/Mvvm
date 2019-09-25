@@ -97,7 +97,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                 override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                     super.onScrollStateChanged(it, newState)
                     if (!it.canScrollVertically(1)) {
-                        model.getPage()
+                        model.getAccountsPage()
                         scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
                     }
                 }
@@ -115,9 +115,6 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                             Configuration.ORIENTATION_LANDSCAPE)
                 ) View.VISIBLE
                 else View.GONE
-            })
-            statusSwitchValue.observe(activity, Observer<Boolean> {
-                binding.statusEdit.text = getString(if (it) R.string.active else R.string.inactive)
             })
             retryNetworkRequest.observe(activity, Observer<Boolean> {
                 snackBar.apply { if (it) show() else dismiss() }
