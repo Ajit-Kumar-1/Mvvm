@@ -101,6 +101,22 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         return success
     }
 
+    private fun getAccountEntityFromJSON(jsonObject: JSONObject): AccountEntity = jsonObject.let {
+        AccountEntity(
+            it.getString(ID_KEY).toInt(),
+            it.getString(FIRST_NAME_KEY).trim(),
+            it.getString(LAST_NAME_KEY).trim(),
+            it.getString(GENDER_KEY).trim(),
+            it.getString(DOB_KEY).trim(),
+            it.getString(EMAIL_KEY).toLowerCase(Locale.ROOT),
+            it.getString(PHONE_KEY).trim(),
+            it.getString(WEBSITE_KEY).trim(),
+            it.getString(ADDRESS_KEY).trim(),
+            it.getString(STATUS_KEY).trim(),
+            it.getJSONObject(LINKS_KEY).getJSONObject(AVATAR_KEY).getString(HREF_KEY)
+        )
+    }
+
     private fun getPageFailure(response: JSONObject) {
         val responseMetadata: JSONObject = response.getJSONObject(META_KEY)
         Toast.makeText(
@@ -129,6 +145,38 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
                     id = it,
                     callBack = this as ViewModelCallBack
                 )
+            }
+        }
+    }
+
+    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
+        if (maleRadioButtonValue.value == true) gender = MALE
+        if (femaleRadioButtonValue.value == true) gender = FEMALE
+        status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
+    }
+
+    private fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
+            HashMap<String, String?> = HashMap<String, String?>().also { map ->
+        currentAccount?.run {
+            originalAccount?.let {
+                if (it.firstName?.trim() != firstName?.trim())
+                    map[FIRST_NAME_KEY] = firstName?.trim()
+                if (it.lastName?.trim() != lastName?.trim())
+                    map[LAST_NAME_KEY] = lastName?.trim()
+                if (it.gender?.trim() != gender)
+                    map[GENDER_KEY] = gender?.trim()
+                if (it.dob?.trim() != dob?.trim())
+                    map[DOB_KEY] = dob?.trim()
+                if (it.email?.trim() != email?.trim())
+                    map[EMAIL_KEY] = email?.trim()
+                if (it.phone?.trim() != phone?.trim())
+                    map[PHONE_KEY] = phone?.trim()
+                if (it.website?.trim() != website?.trim())
+                    map[WEBSITE_KEY] = website?.trim()
+                if (it.address?.trim() != address?.trim())
+                    map[ADDRESS_KEY] = address?.trim()
+                if (it.status?.trim() != status?.trim())
+                    map[STATUS_KEY] = status?.trim()
             }
         }
     }
@@ -180,53 +228,5 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
     fun retryNetworkRequest(): Unit = repository.retryNetworkCall()
-
-    private fun getAccountEntityFromJSON(jsonObject: JSONObject): AccountEntity = jsonObject.let {
-        AccountEntity(
-            it.getString(ID_KEY).toInt(),
-            it.getString(FIRST_NAME_KEY).trim(),
-            it.getString(LAST_NAME_KEY).trim(),
-            it.getString(GENDER_KEY).trim(),
-            it.getString(DOB_KEY).trim(),
-            it.getString(EMAIL_KEY).toLowerCase(Locale.ROOT),
-            it.getString(PHONE_KEY).trim(),
-            it.getString(WEBSITE_KEY).trim(),
-            it.getString(ADDRESS_KEY).trim(),
-            it.getString(STATUS_KEY).trim(),
-            it.getJSONObject(LINKS_KEY).getJSONObject(AVATAR_KEY).getString(HREF_KEY)
-        )
-    }
-
-    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
-        if (maleRadioButtonValue.value == true) gender = MALE
-        if (femaleRadioButtonValue.value == true) gender = FEMALE
-        status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
-    }
-
-    private fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
-            HashMap<String, String?> = HashMap<String, String?>().also { map ->
-        currentAccount?.run {
-            originalAccount?.let {
-                if (it.firstName?.trim() != firstName?.trim())
-                    map[FIRST_NAME_KEY] = firstName?.trim()
-                if (it.lastName?.trim() != lastName?.trim())
-                    map[LAST_NAME_KEY] = lastName?.trim()
-                if (it.gender?.trim() != gender)
-                    map[GENDER_KEY] = gender?.trim()
-                if (it.dob?.trim() != dob?.trim())
-                    map[DOB_KEY] = dob?.trim()
-                if (it.email?.trim() != email?.trim())
-                    map[EMAIL_KEY] = email?.trim()
-                if (it.phone?.trim() != phone?.trim())
-                    map[PHONE_KEY] = phone?.trim()
-                if (it.website?.trim() != website?.trim())
-                    map[WEBSITE_KEY] = website?.trim()
-                if (it.address?.trim() != address?.trim())
-                    map[ADDRESS_KEY] = address?.trim()
-                if (it.status?.trim() != status?.trim())
-                    map[STATUS_KEY] = status?.trim()
-            }
-        }
-    }
 
 }
