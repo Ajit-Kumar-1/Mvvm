@@ -37,17 +37,15 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
     override fun onBindViewHolder(holder: MyViewHolder, position: Int): Unit = holder.run {
         if (position == 0) setInitialAccount()
         bindData(binding, position)
-        itemView.let {
-            it.setBackgroundColor(highlightColor(position))
-            it.setOnClickListener {
-                if (position != model.selectedItemPosition) {
-                    model.showAccountDetails(accountData?.get(position))
-                    model.selectedItemPosition = position
-                    notifyDataSetChanged()
-                }
+        itemView.setBackgroundColor(highlightColor(position))
+        itemView.setOnClickListener {
+            if (position != model.selectedItemPosition) {
+                model.showAccountDetails(accountData?.get(position))
+                model.selectedItemPosition = position
+                notifyDataSetChanged()
                 setLayoutTitleAndVisibility()
-                recyclerView.scrollToPosition(position)
             }
+            recyclerView.scrollToPosition(position)
         }
     }
 
