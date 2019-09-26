@@ -2,7 +2,7 @@ package com.example.mvvm.view
 
 import android.content.IntentFilter
 import android.content.res.Configuration
-import android.net.ConnectivityManager
+import android.net.ConnectivityManager.CONNECTIVITY_ACTION
 import android.os.Bundle
 import android.view.View
 import android.widget.ToggleButton
@@ -20,7 +20,6 @@ import com.example.mvvm.viewModel.AccountDetailsAdapter
 import com.example.mvvm.viewModel.AccountViewModel
 import com.google.android.material.snackbar.Snackbar
 
-@Suppress("DEPRECATION")
 class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityReceiverListener {
 
     private lateinit var binding: ActivityCallApiBinding
@@ -31,20 +30,20 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_call_api)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        registerReceiver(
-            connectivityReceiver,
-            IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        )
-        binding.account = ViewModelProviders.of(this).get(AccountViewModel::class.java)
-        binding.lifecycleOwner = this
-        snackBar = Snackbar.make(
-            binding.recyclerView, R.string.not_connected, Snackbar.LENGTH_INDEFINITE
-        )
 
+        setViewModelAndConnectivityReceiver()
         setLayoutTitleAndVisibility()
         setButtonListeners()
         setUpRecyclerView()
         setObservers()
+    }
+
+    private fun setViewModelAndConnectivityReceiver(): Unit = binding.let {
+        @Suppress("DEPRECATION")
+        registerReceiver(connectivityReceiver, IntentFilter(CONNECTIVITY_ACTION))
+        it.account = ViewModelProviders.of(this).get(AccountViewModel::class.java)
+        it.lifecycleOwner = this
+        snackBar = Snackbar.make(it.recyclerView, R.string.disconnected, Snackbar.LENGTH_INDEFINITE)
     }
 
     private fun setLayoutTitleAndVisibility(): Unit = if (binding.account?.dataExists == true) {
@@ -79,36 +78,29 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrollStateChanged(it: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(it, newState)
-                if (!it.canScrollVertically(1)) {
-                    binding.account?.getAccountsPage()
-                    scrollToPosition((it.adapter?.itemCount ?: 1) - 1)
-                }
+                if (!it.canScrollVertically(1)) binding.account?.getAccountsPage()
             }
         })
     }
 
-    private fun setObservers(): Unit? = binding.account?.run {
-        getData()?.observe(this@APICallActivity, Observer<MutableList<AccountEntity>> {
+    private fun setObservers(): Unit? = binding.account?.let { model ->
+        model.getData()?.observe(this, Observer<MutableList<AccountEntity>> {
             (binding.recyclerView.adapter as AccountDetailsAdapter).setData(it)
         })
-        viewDetailsContainerOnPortrait.observe(this@APICallActivity, Observer<Boolean> {
-            binding.fragmentContainer.visibility = if (dataExists &&
+        model.viewDetailsContainerOnPortrait.observe(this, Observer<Boolean> {
+            binding.fragmentContainer.visibility = if (model.dataExists &&
                 (it || resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE)
             ) View.VISIBLE else View.GONE
         })
-        retryNetworkRequest.observe(this@APICallActivity, Observer<Boolean> {
+        model.retryNetworkRequest.observe(this, Observer<Boolean> {
             snackBar.apply { if (it) show() else dismiss() }
         })
     }
 
-    override fun onNetworkConnectionChanged(isConnected: Boolean) {
-        binding.account?.run {
-            if (isConnected) {
-                if (retryNetworkRequest.value!!) retryNetworkRequest()
-                retryNetworkRequest.value = false
-            } else retryNetworkRequest.value = true
-        }
-    }
+    override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = binding.account?.let {
+        if (!isConnected) it.retryNetworkRequest.value = true
+        else if (it.retryNetworkRequest.value == true) it.retryNetworkRequest()
+    } ?: Unit
 
     override fun onResume() {
         super.onResume()
@@ -120,18 +112,17 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         return super.onSupportNavigateUp()
     }
 
-    override fun onBackPressed(): Unit =
-        if (binding.fragmentContainer.visibility == View.VISIBLE &&
-            resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-        ) {
-            title = getString(R.string.accounts)
-            binding.account?.viewDetailsContainerOnPortrait?.value = false
-            binding.account?.reassignAccountDetails()
-            binding.fragmentContainer.visibility = View.GONE
-        } else {
-            super.onBackPressed()
-            overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
-        }
+    override fun onBackPressed(): Unit = if (binding.fragmentContainer.visibility == View.VISIBLE &&
+        resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    ) {
+        title = getString(R.string.accounts)
+        binding.account?.viewDetailsContainerOnPortrait?.value = false
+        binding.account?.reassignAccountDetails()
+        binding.fragmentContainer.visibility = View.GONE
+    } else {
+        super.onBackPressed()
+        overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)
+    }
 
     override fun onDestroy() {
         super.onDestroy()

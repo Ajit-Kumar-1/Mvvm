@@ -40,7 +40,7 @@
     <string name="name">Name</string>
     <string name="network_error">Network Error</string>
     <string name="new_signup_here">New ? Sign up here:</string>
-    <string name="not_connected">Not connected to network</string>
+    <string name="disconnected">Not connected to network</string>
     <string name="padding">padding</string>
     <string name="password">Password</string>
     <string name="password_colon">Password:</string>

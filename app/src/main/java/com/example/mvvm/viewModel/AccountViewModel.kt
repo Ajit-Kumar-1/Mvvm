@@ -187,11 +187,15 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
-    fun retryNetworkRequest(): Unit = repository.retryNetworkCall()
+    fun retryNetworkRequest() {
+        repository.retryNetworkCall()
+        retryNetworkRequest.value = false
+    }
 
     fun loadInitialAccount(account: AccountEntity?) {
         assignAccountDetails(account, 0)
         dataExists = true
+        viewDetailsContainerOnPortrait.value = false
     }
 
 }
