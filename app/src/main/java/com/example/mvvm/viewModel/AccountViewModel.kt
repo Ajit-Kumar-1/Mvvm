@@ -2,6 +2,7 @@ package com.example.mvvm.viewModel
 
 import android.app.Application
 import android.widget.Toast
+import android.widget.Toast.LENGTH_SHORT
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -57,7 +58,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     var dataExists = false
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
-    val adapter = AccountDetailsAdapter(getData()?.value)
+    val adapter = AccountDetailsAdapter(getData()?.value) //Here due to scroll position reset issue
 
     init {
         getAccountsPage()
@@ -65,33 +66,24 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     fun getAccountsPage() {
         paginationProgressSpinnerVisibility.value = true
-        repository.getPageRequest(pageIndex = pageIndex, callBack = this as ViewModelCallBack)
+        repository.getPageRequest(pageIndex, this as ViewModelCallBack)
     }
 
     override fun getAccountsPageResponse(response: JSONObject) {
         if (!response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) getPageFailure(response)
-        else if (getDataFromJSONArray(response = response)) pageIndex++
+        else if (getDataFromJSONArray(response.getJSONArray(RESULT_KEY))) pageIndex++
         paginationProgressSpinnerVisibility.value = false
     }
 
-    private fun getDataFromJSONArray(response: JSONObject): Boolean {
-        var success = true
-        var previousID: Int = if (repository.getData()?.value?.isNotEmpty() == true)
-            repository.getData()?.value?.last()?.id ?: 0
-        else 0
-        val jsonArray: JSONArray = response.getJSONArray(RESULT_KEY)
-        for (i: Int in 0 until jsonArray.length()) {
-            val jsonObject: JSONObject = jsonArray.getJSONObject(i)
-            if (jsonObject.getString(ID_KEY).toInt() > previousID) repository.apply {
-                val account: AccountEntity = getAccountEntityFromJSON(jsonObject)
-                insertAccountIntoDatabase(account)
-                previousID = account.id
-            } else {
-                success = false
-                break
+    private fun getDataFromJSONArray(array: JSONArray): Boolean {
+        var previousID: Int = repository.getData()?.value?.last()?.id ?: 0
+        for (i: Int in 0 until array.length())
+            getAccountEntityFromJSON(array.getJSONObject(i)).let {
+                if (it.id > previousID) repository.insertAccountIntoDatabase(it)
+                else return false
+                previousID = it.id
             }
-        }
-        return success
+        return true
     }
 
     private fun getAccountEntityFromJSON(jsonObject: JSONObject): AccountEntity = jsonObject.let {
@@ -101,7 +93,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
             it.getString(LAST_NAME_KEY).trim(),
             it.getString(GENDER_KEY).trim(),
             it.getString(DOB_KEY).trim(),
-            it.getString(EMAIL_KEY).toLowerCase(Locale.ROOT),
+            it.getString(EMAIL_KEY).trim().toLowerCase(Locale.ROOT),
             it.getString(PHONE_KEY).trim(),
             it.getString(WEBSITE_KEY).trim(),
             it.getString(ADDRESS_KEY).trim(),
@@ -113,29 +105,29 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     private fun getPageFailure(response: JSONObject): Unit = response.getJSONObject(META_KEY).let {
         Toast.makeText(
             getApplication(), "${it.get(CODE_KEY)}:" + " ${it.get(MESSAGE_KEY)}",
-            Toast.LENGTH_SHORT
+            LENGTH_SHORT
         ).show()
     }
 
     override fun getAccountsPageError(throwable: Throwable) {
         paginationProgressSpinnerVisibility.value = false
-        Toast.makeText(getApplication(), throwable.message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(getApplication(), throwable.message, LENGTH_SHORT).show()
     }
 
-    fun putAccountDetailChanges(): Unit = findChanges(
-        currentAccount = setGenderAndStatus(account = accountCurrentDetails.value),
-        originalAccount = accountOriginalDetails
-    ).let {
-        if (it.size > 0) accountCurrentDetails.value?.id?.let { id ->
-            repository.putChangesRequest(JSONObject(it as Map<*, *>), id, this as ViewModelCallBack)
-            putRequestProgressSpinnerVisibility.value = true
+    fun putAccountDetailChanges(): Unit =
+        findChanges(setGenderAndStatus(accountCurrentDetails.value), accountOriginalDetails).let {
+            if (it.size > 0) accountCurrentDetails.value?.id?.let { id ->
+                repository.putChangesRequest(
+                    JSONObject(it as Map<*, *>), id, this as ViewModelCallBack
+                )
+                putRequestProgressSpinnerVisibility.value = true
+            }
         }
-    }
 
-    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.also {
-        if (maleRadioButtonValue.value == true) it.gender = MALE
-        if (femaleRadioButtonValue.value == true) it.gender = FEMALE
-        it.status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
+    private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
+        if (maleRadioButtonValue.value == true) gender = MALE
+        if (femaleRadioButtonValue.value == true) gender = FEMALE
+        status = if (statusSwitchValue.value == true) ACTIVE else INACTIVE
     }
 
     private fun findChanges(currentAccount: AccountEntity?, originalAccount: AccountEntity?):
@@ -143,7 +135,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         currentAccount?.run {
             originalAccount?.let {
                 if (it.firstName?.trim() != firstName?.trim()) map[FIRST_NAME_KEY] =
-                    firstName
+                    firstName?.trim()
                 if (it.lastName?.trim() != lastName?.trim()) map[LAST_NAME_KEY] = lastName?.trim()
                 if (it.gender?.trim() != gender) map[GENDER_KEY] = gender?.trim()
                 if (it.dob?.trim() != dob?.trim()) map[DOB_KEY] = dob?.trim()
@@ -157,27 +149,25 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     }
 
     override fun putAccountChangesResponse(response: JSONObject) {
-        if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY)) {
+        if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY))
             getAccountEntityFromJSON(response.getJSONObject(RESULT_KEY)).let {
                 repository.insertAccountIntoDatabase(it)
                 assignAccountDetails(account = it, position = selectedItemPosition)
-            }
-            Toast.makeText(getApplication(), R.string.information_updated, Toast.LENGTH_SHORT)
-                .show()
-        } else onPutFailure(response = response)
+                Toast.makeText(getApplication(), R.string.information_updated, LENGTH_SHORT).show()
+            } else onPutFailure(response)
         putRequestProgressSpinnerVisibility.value = false
     }
 
     private fun onPutFailure(response: JSONObject): Unit = response.getJSONArray(RESULT_KEY).let {
         for (i in 0 until it.length()) Toast.makeText(
             getApplication(), "${it.getJSONObject(i).getString(FIELD_KEY)}:" +
-                    " ${it.getJSONObject(i).getString(MESSAGE_KEY)}", Toast.LENGTH_SHORT
+                    " ${it.getJSONObject(i).getString(MESSAGE_KEY)}", LENGTH_SHORT
         ).show()
     }
 
     override fun putAccountChangesError(throwable: Throwable) {
         putRequestProgressSpinnerVisibility.value = false
-        Toast.makeText(getApplication(), throwable.message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(getApplication(), throwable.message, LENGTH_SHORT).show()
     }
 
     fun assignAccountDetails(account: AccountEntity?, position: Int) {
