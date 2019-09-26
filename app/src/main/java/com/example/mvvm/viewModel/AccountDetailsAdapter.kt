@@ -28,28 +28,35 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         this.recyclerView = recyclerView
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder =
-        parent.let {
-            activity = it.context as AppCompatActivity
-            model = ViewModelProviders.of(activity).get(AccountViewModel::class.java)
-            MyViewHolder(EntryBinding.inflate(LayoutInflater.from(activity), parent, false))
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder = parent.let {
+        activity = it.context as AppCompatActivity
+        model = ViewModelProviders.of(activity).get(AccountViewModel::class.java)
+        MyViewHolder(EntryBinding.inflate(LayoutInflater.from(activity), parent, false))
+    }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int): Unit = holder.run {
-        bindData(binding, position)
         if (position == 0) setInitialAccount()
+        bindData(binding, position)
         itemView.let {
-            it.setBackgroundColor(highlightColor(position = position))
+            it.setBackgroundColor(highlightColor(position))
             it.setOnClickListener {
-                model.assignAccountDetails(accountData?.get(position),position)
+                if (position != model.selectedItemPosition) {
+                    model.showAccountDetails(accountData?.get(position))
+                    model.selectedItemPosition = position
+                    notifyDataSetChanged()
+                }
                 setLayoutTitleAndVisibility()
-                notifyDataSetChanged()
                 recyclerView.scrollToPosition(position)
             }
         }
     }
 
     override fun getItemCount(): Int = accountData?.size ?: 0
+
+    fun setData(data: MutableList<AccountEntity>) {
+        this.accountData = data
+        notifyDataSetChanged()
+    }
 
     private fun bindData(binding: EntryBinding, position: Int): Unit = binding.run {
         accountData?.get(position)?.let {
@@ -60,7 +67,7 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
     }
 
     private fun setInitialAccount(): Unit = model.run {
-        if (getSelectedItemPosition() == 0 && enableAccountDetailEdit.value == false)
+        if (model.selectedItemPosition == 0 && enableAccountDetailEdit.value == false)
             loadInitialAccount(accountData?.get(0))
     }
 
@@ -74,13 +81,8 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         }
     }
 
-    private fun highlightColor(position: Int): Int = if (model.getSelectedItemPosition() == position
+    private fun highlightColor(position: Int): Int = if (model.selectedItemPosition == position
         && activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    ) R.color.yellowHighlight else Color.TRANSPARENT
-
-    fun setData(data: MutableList<AccountEntity>) {
-        this.accountData = data
-        notifyDataSetChanged()
-    }
+    ) R.color.itemHighlight else Color.TRANSPARENT
 
 }

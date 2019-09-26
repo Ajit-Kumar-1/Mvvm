@@ -44,9 +44,9 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     private val repository: AccountRepository = AccountRepository(application)
     private var pageIndex: Int = 1
-    private var selectedItemPosition: Int = 0
     private var accountOriginalDetails: AccountEntity? = null
-    var accountCurrentDetails: MutableLiveData<AccountEntity> = MutableLiveData()
+    internal var selectedItemPosition: Int = 0
+    var accountCurrentDetails: MutableLiveData<AccountEntity?> = MutableLiveData()
     var paginationProgressSpinnerVisibility: MutableLiveData<Boolean> = MutableLiveData(false)
     var putRequestProgressSpinnerVisibility: MutableLiveData<Boolean> = MutableLiveData(false)
     var enableAccountDetailEdit: MutableLiveData<Boolean> = MutableLiveData(false)
@@ -104,8 +104,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     private fun getPageFailure(response: JSONObject): Unit = response.getJSONObject(META_KEY).let {
         Toast.makeText(
-            getApplication(), "${it.get(CODE_KEY)}:" + " ${it.get(MESSAGE_KEY)}",
-            LENGTH_SHORT
+            getApplication(), "${it.get(CODE_KEY)}:" + " ${it.get(MESSAGE_KEY)}", LENGTH_SHORT
         ).show()
     }
 
@@ -152,7 +151,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         if (response.getJSONObject(META_KEY).getBoolean(SUCCESS_KEY))
             getAccountEntityFromJSON(response.getJSONObject(RESULT_KEY)).let {
                 repository.insertAccountIntoDatabase(it)
-                assignAccountDetails(account = it, position = selectedItemPosition)
+                showAccountDetails(it)
                 Toast.makeText(getApplication(), R.string.information_updated, LENGTH_SHORT).show()
             } else onPutFailure(response)
         putRequestProgressSpinnerVisibility.value = false
@@ -170,20 +169,16 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
         Toast.makeText(getApplication(), throwable.message, LENGTH_SHORT).show()
     }
 
-    fun assignAccountDetails(account: AccountEntity?, position: Int) {
+    fun showAccountDetails(account: AccountEntity?) {
         accountOriginalDetails = account
         accountCurrentDetails.value = accountOriginalDetails?.copy()
         maleRadioButtonValue.value = accountCurrentDetails.value?.gender == MALE
         femaleRadioButtonValue.value = accountCurrentDetails.value?.gender == FEMALE
         statusSwitchValue.value = accountCurrentDetails.value?.status == ACTIVE
-        this.selectedItemPosition = position
         enableAccountDetailEdit.value = false
     }
 
-    fun reassignAccountDetails(): Unit =
-        assignAccountDetails(accountOriginalDetails, selectedItemPosition)
-
-    fun getSelectedItemPosition(): Int = selectedItemPosition
+    fun resetAccount(): Unit = showAccountDetails(accountOriginalDetails)
 
     fun getData(): LiveData<MutableList<AccountEntity>>? = repository.getData()
 
@@ -193,7 +188,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun loadInitialAccount(account: AccountEntity?) {
-        assignAccountDetails(account, 0)
+        showAccountDetails(account)
         dataExists = true
         viewDetailsContainerOnPortrait.value = false
     }

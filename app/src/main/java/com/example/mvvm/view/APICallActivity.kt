@@ -63,7 +63,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
                 title = getString(R.string.accounts)
                 viewDetailsContainerOnPortrait.value = false
             }
-            reassignAccountDetails()
+            resetAccount()
         }
         binding.editButton.setOnClickListener {
             title = getString(R.string.account_details)
@@ -117,7 +117,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     ) {
         title = getString(R.string.accounts)
         binding.account?.viewDetailsContainerOnPortrait?.value = false
-        binding.account?.reassignAccountDetails()
+        binding.account?.resetAccount()
         binding.fragmentContainer.visibility = View.GONE
     } else {
         super.onBackPressed()

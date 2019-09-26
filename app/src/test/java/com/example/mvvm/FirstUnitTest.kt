@@ -126,7 +126,7 @@ class FirstUnitTest {
 
     @Test
     fun statusSwitchValueStateAfterLoadingInitialData() {
-        // Check if variable assignAccountDetails matches data value
+        // Check if variable showAccountDetails matches data value
         viewModel.apply {
             loadInitialPage()
             assertEquals(
@@ -137,7 +137,7 @@ class FirstUnitTest {
 
     @Test
     fun maleRadioButtonStateTest() {
-        // Check if variable assignAccountDetails matches data value
+        // Check if variable showAccountDetails matches data value
         viewModel.apply {
             loadInitialPage()
             assertEquals(accountCurrentDetails.value?.gender == "male", maleRadioButtonValue.value)
@@ -146,7 +146,7 @@ class FirstUnitTest {
 
     @Test
     fun femaleRadioButtonStateAfterLoadingInitialData() {
-        // Check if variable assignAccountDetails matches data value
+        // Check if variable showAccountDetails matches data value
         viewModel.apply {
             loadInitialPage()
             assertEquals(
