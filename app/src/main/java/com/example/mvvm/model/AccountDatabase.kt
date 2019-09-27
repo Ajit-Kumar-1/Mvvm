@@ -13,16 +13,13 @@ abstract class AccountDatabase : RoomDatabase() {
 
         private var instance: AccountDatabase? = null
         fun getInstance(context: Context): AccountDatabase? {
-            if (instance == null)
-                synchronized(AccountDatabase::class) {
-                    instance = Room.databaseBuilder(
-                        context.applicationContext,
-                        AccountDatabase::class.java, "data-list.db"
-                    ).fallbackToDestructiveMigration().build()
-                }
+            if (instance == null) synchronized(AccountDatabase::class) {
+                instance = Room.databaseBuilder(
+                    context.applicationContext, AccountDatabase::class.java, "data-list.db"
+                ).fallbackToDestructiveMigration().build()
+            }
             return instance
         }
-
     }
 
 }

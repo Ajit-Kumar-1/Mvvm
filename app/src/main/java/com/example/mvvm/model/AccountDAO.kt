@@ -1,7 +1,10 @@
 package com.example.mvvm.model
 
 import androidx.lifecycle.LiveData
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 
 @Dao
 interface AccountDAO {
@@ -11,8 +14,5 @@ interface AccountDAO {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(vararg data: AccountEntity)
-
-    @Query("DELETE FROM data")
-    suspend fun deleteAll()
 
 }

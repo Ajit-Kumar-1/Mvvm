@@ -12,13 +12,11 @@ interface AccountNetworkService {
     fun getAccountsPage(@Query(value = "page", encoded = true) pageIndex: Int): Call<String>
 
     @Headers(
-        "$ACCESS_TOKEN_KEY: $ACCESS_TOKEN_VALUE",
-        "$CONTENT_TYPE_KEY: $CONTENT_TYPE_VALUE"
+        "$ACCESS_TOKEN_KEY: $ACCESS_TOKEN_VALUE", "$CONTENT_TYPE_KEY: $CONTENT_TYPE_VALUE"
     )
     @PATCH(value = "users/{id}")
-    fun putAccountDetails(
-        @Path(value = "id", encoded = true) id: Int, @Body payload: String
-    ): Call<String>
+    fun putAccountDetails(@Path(value = "id", encoded = true) id: Int, @Body payload: String):
+            Call<String>
 
     companion object {
         private const val BASE_URL: String = "https://gorest.co.in/public-api/"
@@ -30,9 +28,8 @@ interface AccountNetworkService {
 
         private var instance: Retrofit? = null
         fun getInstance(): Retrofit? {
-            if (instance == null)
-                instance = Retrofit.Builder().baseUrl(BASE_URL)
-                    .addConverterFactory(ScalarsConverterFactory.create()).build()
+            if (instance == null) instance = Retrofit.Builder().baseUrl(BASE_URL)
+                .addConverterFactory(ScalarsConverterFactory.create()).build()
             return instance
         }
     }

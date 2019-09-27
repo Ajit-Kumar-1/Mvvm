@@ -56,6 +56,11 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         notifyDataSetChanged()
     }
 
+    private fun setInitialAccount(): Unit = model.run {
+        if (model.selectedItemPosition == 0 && enableAccountDetailEdit.value == false)
+            loadInitialAccount(accountData?.get(0))
+    }
+
     private fun bindData(binding: EntryBinding, position: Int): Unit = binding.run {
         accountData?.get(position)?.let {
             entry = Entry("${it.firstName} ${it.lastName}", it.gender, it.email)
@@ -64,10 +69,9 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         executePendingBindings()
     }
 
-    private fun setInitialAccount(): Unit = model.run {
-        if (model.selectedItemPosition == 0 && enableAccountDetailEdit.value == false)
-            loadInitialAccount(accountData?.get(0))
-    }
+    private fun highlightColor(position: Int): Int = if (model.selectedItemPosition == position
+        && activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    ) R.color.itemHighlight else Color.TRANSPARENT
 
     private fun setLayoutTitleAndVisibility(): Unit = activity.run {
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -78,9 +82,5 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
             model.viewDetailsContainerOnPortrait.value = false
         }
     }
-
-    private fun highlightColor(position: Int): Int = if (model.selectedItemPosition == position
-        && activity.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-    ) R.color.itemHighlight else Color.TRANSPARENT
 
 }

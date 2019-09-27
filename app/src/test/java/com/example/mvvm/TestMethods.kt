@@ -28,7 +28,7 @@ object TestMethods {
             it.getString(LAST_NAME_KEY).trim(),
             it.getString(GENDER_KEY).trim(),
             it.getString(DOB_KEY).trim(),
-            it.getString(EMAIL_KEY).toLowerCase(Locale.ROOT),
+            it.getString(EMAIL_KEY).trim().toLowerCase(Locale.ROOT),
             it.getString(PHONE_KEY).trim(),
             it.getString(WEBSITE_KEY).trim(),
             it.getString(ADDRESS_KEY).trim(),
@@ -43,22 +43,14 @@ object TestMethods {
             originalAccount?.let {
                 if (it.firstName?.trim() != firstName?.trim())
                     map[FIRST_NAME_KEY] = firstName?.trim()
-                if (it.lastName?.trim() != lastName?.trim())
-                    map[LAST_NAME_KEY] = lastName?.trim()
-                if (it.gender?.trim() != gender)
-                    map[GENDER_KEY] = gender?.trim()
-                if (it.dob?.trim() != dob?.trim())
-                    map[DOB_KEY] = dob?.trim()
-                if (it.email?.trim() != email?.trim())
-                    map[EMAIL_KEY] = email?.trim()
-                if (it.phone?.trim() != phone?.trim())
-                    map[PHONE_KEY] = phone?.trim()
-                if (it.website?.trim() != website?.trim())
-                    map[WEBSITE_KEY] = website?.trim()
-                if (it.address?.trim() != address?.trim())
-                    map[ADDRESS_KEY] = address?.trim()
-                if (it.status?.trim() != status?.trim())
-                    map[STATUS_KEY] = status?.trim()
+                if (it.lastName?.trim() != lastName?.trim()) map[LAST_NAME_KEY] = lastName?.trim()
+                if (it.gender?.trim() != gender) map[GENDER_KEY] = gender?.trim()
+                if (it.dob?.trim() != dob?.trim()) map[DOB_KEY] = dob?.trim()
+                if (it.email?.trim() != email?.trim()) map[EMAIL_KEY] = email?.trim()
+                if (it.phone?.trim() != phone?.trim()) map[PHONE_KEY] = phone?.trim()
+                if (it.website?.trim() != website?.trim()) map[WEBSITE_KEY] = website?.trim()
+                if (it.address?.trim() != address?.trim()) map[ADDRESS_KEY] = address?.trim()
+                if (it.status?.trim() != status?.trim()) map[STATUS_KEY] = status?.trim()
             }
         }
     }

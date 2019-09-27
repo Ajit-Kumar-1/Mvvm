@@ -214,7 +214,7 @@
                             <EditText
                                 android:id="@+id/last_name_edit"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="46dp"
                                 android:ems="10"
                                 android:enabled="@{account.enableAccountDetailEdit}"
                                 android:hint="@string/blank"
@@ -233,6 +233,7 @@
                                 android:paddingEnd="10dp">
 
                                 <RadioButton
+                                    android:layout_gravity="center_vertical"
                                     android:id="@+id/female_option"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -242,6 +243,7 @@
                                     android:text="@string/female" />
 
                                 <RadioButton
+                                    android:layout_gravity="center_vertical"
                                     android:id="@+id/male_option"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
@@ -276,7 +278,7 @@
                             <EditText
                                 android:id="@+id/phone_edit"
                                 android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
+                                android:layout_height="46dp"
                                 android:ems="10"
                                 android:enabled="@{account.enableAccountDetailEdit}"
                                 android:hint="@string/blank"
