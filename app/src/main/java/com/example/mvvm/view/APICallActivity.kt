@@ -1,11 +1,13 @@
 package com.example.mvvm.view
 
+import android.annotation.TargetApi
 import android.content.IntentFilter
 import android.content.res.Configuration
 import android.net.ConnectivityManager.CONNECTIVITY_ACTION
+import android.os.Build
 import android.os.Bundle
 import android.view.View
-import android.widget.ToggleButton
+import android.view.animation.TranslateAnimation
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -57,6 +59,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         } else title = getString(R.string.accounts)
     } else binding.fragmentContainer.visibility = View.GONE
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private fun setButtonListeners(): Unit? = binding.account?.run {
         binding.cancelButton.setOnClickListener {
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -65,10 +68,12 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             }
             resetAccount()
         }
+        binding.cancelButton.setImageDrawable(getDrawable(R.drawable.cancel))
         binding.editButton.setOnClickListener {
+            if (enableAccountDetailEdit.value == false) enableAccountDetailEdit.value = true
+            else putAccountDetailChanges()
             title = getString(R.string.account_details)
             viewDetailsContainerOnPortrait.value = true
-            if (!(it as ToggleButton).isChecked) putAccountDetailChanges()
         }
     }
 
@@ -95,6 +100,37 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         model.retryNetworkRequest.observe(this, Observer<Boolean> {
             snackBar.apply { if (it) show() else dismiss() }
         })
+        model.enableAccountDetailEdit.observe(this, Observer<Boolean> {
+            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+            if (it) {
+                binding.editButton.setImageDrawable(getDrawable(R.drawable.check))
+                if(!model.previousEnabledState) showCancelButton()
+            } else {
+                binding.editButton.setImageDrawable(getDrawable(R.drawable.edit))
+                if (model.previousEnabledState) hideCancelButton()
+            }
+            model.previousEnabledState = it
+        })
+    }
+
+    private fun showCancelButton(): Unit = binding.run {
+        val animation = TranslateAnimation(
+            editButton.x - editButton.width*0.4375f, cancelButton.x,
+            editButton.y, cancelButton.y
+        )
+        animation.duration = 300
+        animation.fillAfter = true
+        cancelButton.startAnimation(animation)
+    }
+
+    private fun hideCancelButton(): Unit = binding.run {
+        val animation = TranslateAnimation(
+            cancelButton.x, editButton.x - editButton.width*0.4375f,
+            cancelButton.y, editButton.y
+        )
+        animation.duration = 300
+        animation.fillAfter = true
+        cancelButton.startAnimation(animation)
     }
 
     override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = binding.account?.let {
@@ -118,6 +154,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         title = getString(R.string.accounts)
         binding.account?.viewDetailsContainerOnPortrait?.value = false
         binding.account?.resetAccount()
+        binding.account?.previousEnabledState = false
         binding.fragmentContainer.visibility = View.GONE
     } else {
         super.onBackPressed()

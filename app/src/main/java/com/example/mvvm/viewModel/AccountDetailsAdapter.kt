@@ -43,8 +43,8 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
                 model.showAccountDetails(accountData?.get(position))
                 model.selectedItemPosition = position
                 notifyDataSetChanged()
-                setLayoutTitleAndVisibility()
             }
+            setLayoutTitleAndVisibility()
             recyclerView.scrollToPosition(position)
         }
     }
@@ -77,7 +77,7 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
             title = getString(R.string.account_details)
             model.viewDetailsContainerOnPortrait.value = true
-        } else {
+        } else if (model.enableAccountDetailEdit.value == false) {
             title = getString(R.string.accounts)
             model.viewDetailsContainerOnPortrait.value = false
         }

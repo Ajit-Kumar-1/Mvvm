@@ -56,6 +56,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     val activeValue: String = application.resources.getString(R.string.active)
     val inactiveValue: String = application.resources.getString(R.string.inactive)
     var dataExists = false
+    var previousEnabledState = false
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
     val adapter = AccountDetailsAdapter(getData()?.value) //Here due to scroll position reset issue
@@ -121,6 +122,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
                 )
                 putRequestProgressSpinnerVisibility.value = true
             }
+            else enableAccountDetailEdit.value = false
         }
 
     private fun setGenderAndStatus(account: AccountEntity?): AccountEntity? = account?.apply {
@@ -153,6 +155,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
                 repository.insertAccountIntoDatabase(it)
                 showAccountDetails(it)
                 Toast.makeText(getApplication(), R.string.information_updated, LENGTH_SHORT).show()
+                enableAccountDetailEdit.value = false
             } else onPutFailure(response)
         putRequestProgressSpinnerVisibility.value = false
     }
@@ -166,6 +169,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
 
     override fun putAccountChangesError(throwable: Throwable) {
         putRequestProgressSpinnerVisibility.value = false
+        enableAccountDetailEdit.value = false
         Toast.makeText(getApplication(), throwable.message, LENGTH_SHORT).show()
     }
 
