@@ -193,6 +193,7 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun loadInitialAccount(account: AccountEntity?) {
         showAccountDetails(account)
         dataExists = true
+        viewDetailsContainerOnPortrait.value = viewDetailsContainerOnPortrait.value
     }
 
 }

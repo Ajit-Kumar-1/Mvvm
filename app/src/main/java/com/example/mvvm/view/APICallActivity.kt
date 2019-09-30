@@ -1,13 +1,22 @@
 package com.example.mvvm.view
 
 import android.annotation.TargetApi
+import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager.MATCH_DEFAULT_ONLY
 import android.content.res.Configuration
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager.CONNECTIVITY_ACTION
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowManager
 import android.view.animation.TranslateAnimation
+import android.widget.PopupWindow
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
@@ -39,6 +48,8 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         setButtonListeners()
         setUpRecyclerView()
         setObservers()
+        setPhoneIntent()
+
     }
 
     private fun setViewModelAndConnectivityReceiver(): Unit = binding.let {
@@ -135,6 +146,38 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         isCancelButtonShown = false
     }
 
+    private fun setPhoneIntent(): Unit = binding.phoneEdit.setOnLongClickListener {
+        val callNumberPopupView: View =
+            (applicationContext.getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater)
+                .inflate(R.layout.call_number, binding.fragmentContainer)
+        val callNumberPopupWindow = PopupWindow(
+            callNumberPopupView,
+            WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.WRAP_CONTENT
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+            callNumberPopupWindow.elevation = 10.0f
+        callNumberPopupWindow.run {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            isFocusable = true
+            isOutsideTouchable = true
+            showAsDropDown(binding.phoneEdit)
+        }
+        callNumberPopupView.setOnClickListener {
+            val intent = Intent(
+                Intent.ACTION_DIAL, Uri.parse("tel:" + binding.phoneEdit.text.toString())
+            )
+            if (packageManager.queryIntentActivities(intent, MATCH_DEFAULT_ONLY)
+                    .isNotEmpty()
+            ) startActivity(intent)
+            else {
+                Toast.makeText(this, getString(R.string.no_dialer_app_found), Toast.LENGTH_SHORT)
+                    .show()
+                callNumberPopupWindow.dismiss()
+            }
+        }
+        true
+    }
+
     override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = binding.account?.let {
         if (!isConnected) it.retryNetworkRequest.value = true
         else if (it.retryNetworkRequest.value == true) it.retryNetworkRequest()
@@ -154,11 +197,13 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
         resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     ) {
         title = getString(R.string.accounts)
-        binding.account?.viewDetailsContainerOnPortrait?.value = false
         isCancelButtonShown = false
-        binding.cancelButton.refreshDrawableState()
-        binding.account?.resetAccount()
-        binding.fragmentContainer.visibility = View.GONE
+        binding.run {
+            account?.viewDetailsContainerOnPortrait?.value = false
+            cancelButton.refreshDrawableState()
+            account?.resetAccount()
+            fragmentContainer.visibility = View.GONE
+        }
     } else {
         super.onBackPressed()
         overridePendingTransition(R.anim.left_to_right, R.anim.right_to_left)

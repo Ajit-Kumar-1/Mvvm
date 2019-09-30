@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mvvm.R
 import com.example.mvvm.model.AccountDatabase
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : AppCompatActivity() {
@@ -15,8 +17,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        val deferred = GlobalScope.async {
+            AccountDatabase.getInstance(this@MainActivity)?.clearAllTables()
+        }
         runBlocking {
-            suspend { AccountDatabase.getInstance(this@MainActivity)?.clearAllTables() }
+            deferred.await()
         }
 
         if (supportFragmentManager.fragments.size == 0) supportFragmentManager.beginTransaction()

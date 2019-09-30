@@ -56,4 +56,7 @@
     <string name="website">Website:</string>
     <string name="wrong_password">Wrong Password</string>
     <string name="filler">filler</string>
+    <string name="dialer">dialer</string>
+    <string name="call">Call</string>
+    <string name="no_dialer_app_found">No dialer app found</string>
 </resources>
