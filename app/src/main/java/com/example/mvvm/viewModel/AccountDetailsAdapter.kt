@@ -39,13 +39,13 @@ class AccountDetailsAdapter(private var accountData: MutableList<AccountEntity>?
         bindData(binding, position)
         itemView.setBackgroundColor(highlightColor(position))
         itemView.setOnClickListener {
+            setLayoutTitleAndVisibility()
+            recyclerView.scrollToPosition(position)
             if (position != model.selectedItemPosition) {
                 model.showAccountDetails(accountData?.get(position))
                 model.selectedItemPosition = position
                 notifyDataSetChanged()
             }
-            setLayoutTitleAndVisibility()
-            recyclerView.scrollToPosition(position)
         }
     }
 

@@ -27,6 +27,7 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     private lateinit var binding: ActivityCallApiBinding
     private lateinit var snackBar: Snackbar
     private val connectivityReceiver = ConnectivityReceiver()
+    private var isCancelButtonShown = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,33 +105,34 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
             @TargetApi(Build.VERSION_CODES.LOLLIPOP)
             if (it) {
                 binding.editButton.setImageDrawable(getDrawable(R.drawable.check))
-                if(!model.previousEnabledState) showCancelButton()
+                showCancelButton()
             } else {
                 binding.editButton.setImageDrawable(getDrawable(R.drawable.edit))
-                if (model.previousEnabledState) hideCancelButton()
+                if (isCancelButtonShown) hideCancelButton()
             }
-            model.previousEnabledState = it
         })
     }
 
     private fun showCancelButton(): Unit = binding.run {
         val animation = TranslateAnimation(
-            editButton.x - editButton.width*0.4375f, cancelButton.x,
+            editButton.x - editButton.width * 0.4375f, cancelButton.x,
             editButton.y, cancelButton.y
         )
         animation.duration = 300
-        animation.fillAfter = true
+        animation.fillAfter = false
         cancelButton.startAnimation(animation)
+        isCancelButtonShown = true
     }
 
     private fun hideCancelButton(): Unit = binding.run {
         val animation = TranslateAnimation(
-            cancelButton.x, editButton.x - editButton.width*0.4375f,
+            cancelButton.x, editButton.x - editButton.width * 0.4375f,
             cancelButton.y, editButton.y
         )
         animation.duration = 300
-        animation.fillAfter = true
+        animation.fillAfter = false
         cancelButton.startAnimation(animation)
+        isCancelButtonShown = false
     }
 
     override fun onNetworkConnectionChanged(isConnected: Boolean): Unit = binding.account?.let {
@@ -153,8 +155,9 @@ class APICallActivity : AppCompatActivity(), ConnectivityReceiver.ConnectivityRe
     ) {
         title = getString(R.string.accounts)
         binding.account?.viewDetailsContainerOnPortrait?.value = false
+        isCancelButtonShown = false
+        binding.cancelButton.refreshDrawableState()
         binding.account?.resetAccount()
-        binding.account?.previousEnabledState = false
         binding.fragmentContainer.visibility = View.GONE
     } else {
         super.onBackPressed()

@@ -56,7 +56,6 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     val activeValue: String = application.resources.getString(R.string.active)
     val inactiveValue: String = application.resources.getString(R.string.inactive)
     var dataExists = false
-    var previousEnabledState = false
     var viewDetailsContainerOnPortrait: MutableLiveData<Boolean> = MutableLiveData(false)
     var retryNetworkRequest: MutableLiveData<Boolean> = MutableLiveData(false)
     val adapter = AccountDetailsAdapter(getData()?.value) //Here due to scroll position reset issue
@@ -194,7 +193,6 @@ class AccountViewModel(application: Application) : AndroidViewModel(application)
     fun loadInitialAccount(account: AccountEntity?) {
         showAccountDetails(account)
         dataExists = true
-        viewDetailsContainerOnPortrait.value = false
     }
 
 }
